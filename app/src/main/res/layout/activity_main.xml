@@ -26,7 +26,19 @@
             android:textSize="18dp"
             android:text="Home"
             android:gravity="center"
+            android:visibility="visible"
             android:layout_gravity="center"/>
+        <android.widget.SearchView
+            android:id="@+id/searchBar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:queryHint="Search"
+            android:visibility="gone"
+            android:layout_marginRight="10dp"
+            android:layout_marginLeft="-5dp"
+            android:textColor="#FFFFFF"
+            android:theme="@style/SearchViewStyle"
+            />
     </androidx.appcompat.widget.Toolbar>
     <FrameLayout
         android:id="@+id/frameFragment"

@@ -6,4 +6,20 @@
     </style>
 
     <style name="Theme.LYOS" parent="Base.Theme.LYOS" />
+    <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="textFillColor">#FFFFFF</item>
+        <item name="android:textColorHint">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorHighlight">#B02FFF00</item>
+        <item name="android:background">@drawable/rounded_search_view</item>
+    </style>
+    <style name="TabLayoutStyle" parent="Widget.Design.TabLayout">
+        <item name="tabIndicatorColor">@color/white</item>
+        <item name="tabIndicatorHeight">5dp</item>
+        <item name="tabPaddingStart">8dp</item>
+        <item name="tabPaddingEnd">8dp</item>
+        <item name="tabTextColor">#838383</item>
+        <item name="tabSelectedTextColor">@color/white</item>
+    </style>
 </resources>
