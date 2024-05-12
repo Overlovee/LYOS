@@ -20,7 +20,6 @@
             android:layout_height="70dp"
             android:scaleType="centerCrop"
             android:adjustViewBounds="true"
-            android:src="@drawable/ngoailecuanhau_youngtobieedasick"
             />
     </androidx.cardview.widget.CardView>
 
@@ -29,6 +28,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:layout_weight="1"
+        android:gravity="center"
         android:paddingLeft="15dp"
         android:orientation="vertical">
 
@@ -40,7 +40,10 @@
             android:text="Title"
             android:textColor="#FFFFFF"
             android:textSize="18dp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end"
+            />
 
         <TextView
             android:id="@+id/textViewUserName"
@@ -50,6 +53,8 @@
             android:text="User name "
             android:textColor="#BDB8B8"
             android:textSize="18dp"
+            android:singleLine="true"
+            android:ellipsize="end"
             />
 
     </LinearLayout>
