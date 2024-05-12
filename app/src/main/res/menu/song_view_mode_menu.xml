@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:title="One column"
+        android:id="@+id/one_column"
+        app:showAsAction="never"
+        />
+    <item
+        android:title="Two column"
+        android:id="@+id/two_column"
+        />
+    <item
+        android:title="Horizontal Scroll"
+        android:id="@+id/horizontal_scroll"
+        />
+</menu>

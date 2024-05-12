@@ -8,17 +8,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.lyos.databinding.FragmentAllSearchResultBinding;
-
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link AllSearchResultFragment#newInstance} factory method to
+ * Use the {@link DefaultSearchFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AllSearchResultFragment extends Fragment {
-
-    private String searchString = "";
-    private FragmentAllSearchResultBinding fragmentAllSearchResultBinding;
+public class DefaultSearchFragment extends Fragment {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -29,7 +24,7 @@ public class AllSearchResultFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    public AllSearchResultFragment() {
+    public DefaultSearchFragment() {
         // Required empty public constructor
     }
 
@@ -39,11 +34,11 @@ public class AllSearchResultFragment extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment AllSearchResultFragment.
+     * @return A new instance of fragment DefaultSearchFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static AllSearchResultFragment newInstance(String param1, String param2) {
-        AllSearchResultFragment fragment = new AllSearchResultFragment();
+    public static DefaultSearchFragment newInstance(String param1, String param2) {
+        DefaultSearchFragment fragment = new DefaultSearchFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -57,7 +52,6 @@ public class AllSearchResultFragment extends Fragment {
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
-            this.searchString = getArguments().getString("search_string", "");
         }
     }
 
@@ -65,8 +59,6 @@ public class AllSearchResultFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        fragmentAllSearchResultBinding = FragmentAllSearchResultBinding.inflate(getLayoutInflater());
-        return fragmentAllSearchResultBinding.getRoot();
+        return inflater.inflate(R.layout.fragment_default_search, container, false);
     }
-
 }

@@ -12,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.lyos.CustomAdapters.SearchViewPaperAdapter;
-import com.example.lyos.databinding.ActivityMainBinding;
 import com.example.lyos.databinding.FragmentSearchBinding;
 import com.google.android.material.tabs.TabLayout;
 
@@ -23,6 +22,9 @@ import com.google.android.material.tabs.TabLayout;
  */
 public class SearchFragment extends Fragment {
     final private int TAB_COUNT = 5;
+    private FragmentSearchBinding fragmentSearchBinding;
+    private String searchString = "";
+    SearchViewPaperAdapter viewPagerAdapter;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -54,9 +56,6 @@ public class SearchFragment extends Fragment {
         fragment.setArguments(args);
         return fragment;
     }
-
-    private FragmentSearchBinding fragmentSearchBinding;
-    private String searchString = "";
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,24 +70,28 @@ public class SearchFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         fragmentSearchBinding = FragmentSearchBinding.inflate(getLayoutInflater());
-        return inflater.inflate(R.layout.fragment_search, container, false);
+        return fragmentSearchBinding.getRoot();
     }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        if(searchString.isEmpty()){
+            viewPagerAdapter = new SearchViewPaperAdapter(getChildFragmentManager());
+            fragmentSearchBinding.searchViewPager.setAdapter(viewPagerAdapter);
+            fragmentSearchBinding.searchTab.setupWithViewPager(fragmentSearchBinding.searchViewPager);
+            fragmentSearchBinding.searchViewPager.setOffscreenPageLimit(TAB_COUNT);
+            fragmentSearchBinding.searchTab.setVisibility(View.GONE);
 
-        TabLayout tabLayout;
-        ViewPager viewPager;
-        viewPager = (ViewPager) view.findViewById(R.id.viewPager);
-        tabLayout = (TabLayout) view.findViewById(R.id.tabs);
-        SearchViewPaperAdapter viewPagerAdapter;
+        }
+        else {
+            viewPagerAdapter = new SearchViewPaperAdapter(getChildFragmentManager(), searchString);
 
-        viewPagerAdapter = new SearchViewPaperAdapter(getChildFragmentManager());
+            fragmentSearchBinding.searchViewPager.setAdapter(viewPagerAdapter);
+            fragmentSearchBinding.searchTab.setupWithViewPager(fragmentSearchBinding.searchViewPager);
+            fragmentSearchBinding.searchViewPager.setOffscreenPageLimit(TAB_COUNT);
+        }
 
-        viewPager.setAdapter(viewPagerAdapter);
 
-        tabLayout.setupWithViewPager(viewPager);
-
-        viewPager.setOffscreenPageLimit(TAB_COUNT);
     }
 }

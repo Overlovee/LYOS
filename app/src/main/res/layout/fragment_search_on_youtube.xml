@@ -3,8 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    tools:context=".AllSearchResultFragment">
+    android:background="@color/customDarkColor"
+    tools:context=".SearchOnYoutubeFragment">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycleViewItems"

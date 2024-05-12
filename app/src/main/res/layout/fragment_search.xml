@@ -11,7 +11,7 @@
     tools:context=".SearchFragment">
 
     <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabs"
+        android:id="@+id/searchTab"
         style="@style/TabLayoutStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,7 +19,7 @@
         app:tabGravity="fill"
         app:tabMode="fixed" />
     <androidx.viewpager.widget.ViewPager
-        android:id="@+id/viewPager"
+        android:id="@+id/searchViewPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="99"

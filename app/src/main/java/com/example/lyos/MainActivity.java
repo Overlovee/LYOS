@@ -87,8 +87,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                if (newText.isEmpty()) {
+                    performSearch("");
+                }
                 return false;
             }
+
         });
     }
     @Override
