@@ -58,4 +58,10 @@
             />
 
     </LinearLayout>
+    <ImageView
+        android:id="@+id/imageViewMoreOptionsAction"
+        android:layout_width="50dp"
+        android:layout_height="match_parent"
+        android:scaleType="centerInside"
+        android:src="@drawable/more"/>
 </LinearLayout>

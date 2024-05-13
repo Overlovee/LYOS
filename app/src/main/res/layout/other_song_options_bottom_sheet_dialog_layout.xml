@@ -31,8 +31,9 @@
 
         <TextView
             android:id="@+id/textViewTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textAlignment="center"
             android:text="Title"
             android:textColor="@color/customPrimaryColor"
             android:textSize="24dp"
@@ -40,8 +41,9 @@
 
         <TextView
             android:id="@+id/textViewUserName"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textAlignment="center"
             android:text="Username"
             android:textColor="@color/customSeccondaryColor"
             android:textSize="8pt" />

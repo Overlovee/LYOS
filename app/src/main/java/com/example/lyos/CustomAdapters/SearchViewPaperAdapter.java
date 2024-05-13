@@ -8,10 +8,12 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
+import com.example.lyos.AlbumsSearchFragment;
 import com.example.lyos.AllSearchResultFragment;
 import com.example.lyos.DefaultSearchFragment;
 import com.example.lyos.SearchOnYoutubeFragment;
 import com.example.lyos.TracksSearchFragment;
+import com.example.lyos.UsersSearchFragment;
 
 public class SearchViewPaperAdapter extends FragmentPagerAdapter {
     final private int TAB_COUNT = 5;
@@ -36,10 +38,10 @@ public class SearchViewPaperAdapter extends FragmentPagerAdapter {
             fragment = new TracksSearchFragment();
         }
         else if (position == 2) {
-            fragment = new AllSearchResultFragment();
+            fragment = new UsersSearchFragment();
         }
         else if (position == 3) {
-            fragment = new AllSearchResultFragment();
+            fragment = new AlbumsSearchFragment();
         }
         else if (position == 4) {
             fragment = new SearchOnYoutubeFragment();

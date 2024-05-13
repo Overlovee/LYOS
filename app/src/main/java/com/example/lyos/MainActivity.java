@@ -23,6 +23,8 @@ public class MainActivity extends AppCompatActivity {
         activityMainBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(activityMainBinding.getRoot());
 
+        activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
+
         Intent intent = new Intent(MainActivity.this, SplashActivity.class);
         startActivity(intent);
 
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
         AddEvents();
     }
+
     public void loadFragment(Fragment fragment)
     {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
@@ -81,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 performSearch(query);
-                activityMainBinding.searchBar.clearFocus();
+                clearFocus();
                 return false;
             }
 
@@ -89,11 +92,24 @@ public class MainActivity extends AppCompatActivity {
             public boolean onQueryTextChange(String newText) {
                 if (newText.isEmpty()) {
                     performSearch("");
+                    clearFocus();
                 }
                 return false;
             }
 
         });
+        activityMainBinding.clearButtonPlayback.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
+            }
+        });
+    }
+    public void clearFocus(){
+        activityMainBinding.searchBar.clearFocus();
+    }
+    public void setVisibleLayoutlNowPlaying(){
+        activityMainBinding.layoutNowPlaying.setVisibility(View.VISIBLE);
     }
     @Override
     protected void onDestroy() {

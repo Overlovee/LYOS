@@ -3,6 +3,7 @@ package com.example.lyos.Models;
 import java.util.Date;
 
 public class Song {
+    private String id;
     private String title;
     private String mp3FileName;
     private String imageFileName;
@@ -17,6 +18,7 @@ public class Song {
 
     public Song() {
         // Khởi tạo giá trị mặc định
+        this.id = "";
         this.title = "";
         this.mp3FileName = "";
         this.imageFileName = "";
@@ -31,6 +33,7 @@ public class Song {
     }
 
     public Song(String title, String mp3FileName, String imageFileName, String description, int duration, int favorites, int listens, String type, Date uploadDate, String userID) {
+        this.id = "";
         this.title = title;
         this.mp3FileName = mp3FileName;
         this.imageFileName = imageFileName;
@@ -42,6 +45,14 @@ public class Song {
         this.uploadDate = uploadDate;
         this.userID = userID;
         this.normalizedTitle = normalizeTitle(title);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     // Thêm phương thức chuẩn hóa tiêu đề

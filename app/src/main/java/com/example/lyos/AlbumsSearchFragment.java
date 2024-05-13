@@ -15,25 +15,24 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
-import com.example.lyos.FirebaseHandlers.SongHandler;
-import com.example.lyos.Models.Song;
-import com.example.lyos.databinding.FragmentTracksSearchBinding;
+import com.example.lyos.CustomAdapters.AlbumRecycleViewAdapter;
+import com.example.lyos.FirebaseHandlers.AlbumHandler;
+import com.example.lyos.Models.Album;
+import com.example.lyos.databinding.FragmentAlbumsSearchBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 
-
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link TracksSearchFragment#newInstance} factory method to
+ * Use the {@link AlbumsSearchFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class TracksSearchFragment extends Fragment {
-
+public class AlbumsSearchFragment extends Fragment {
     private String searchString = "";
-    private FragmentTracksSearchBinding fragmentTracksSearchBinding;
+    private FragmentAlbumsSearchBinding fragmentAlbumsSearchBinding;
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -43,7 +42,7 @@ public class TracksSearchFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    public TracksSearchFragment() {
+    public AlbumsSearchFragment() {
         // Required empty public constructor
     }
 
@@ -53,11 +52,11 @@ public class TracksSearchFragment extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment TracksSearchFragment.
+     * @return A new instance of fragment AlbumsSearchFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static TracksSearchFragment newInstance(String param1, String param2) {
-        TracksSearchFragment fragment = new TracksSearchFragment();
+    public static AlbumsSearchFragment newInstance(String param1, String param2) {
+        AlbumsSearchFragment fragment = new AlbumsSearchFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -80,12 +79,11 @@ public class TracksSearchFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         arrayList = new ArrayList<>();
-        fragmentTracksSearchBinding = FragmentTracksSearchBinding.inflate(getLayoutInflater());
-        return fragmentTracksSearchBinding.getRoot();
+        fragmentAlbumsSearchBinding = FragmentAlbumsSearchBinding.inflate(getLayoutInflater());
+        return fragmentAlbumsSearchBinding.getRoot();
     }
-
-    private ArrayList<Song> arrayList;
-    SongRecycleViewAdapter adapter;
+    private ArrayList<Album> arrayList;
+    AlbumRecycleViewAdapter adapter;
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -94,19 +92,19 @@ public class TracksSearchFragment extends Fragment {
     }
 
     private void getDataFromFirestore() {
-        SongHandler handler = new SongHandler();
-        handler.search(searchString).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
+        AlbumHandler handler = new AlbumHandler();
+        handler.search(searchString).addOnCompleteListener(new OnCompleteListener<ArrayList<Album>>() {
             @Override
-            public void onComplete(@NonNull Task<ArrayList<Song>> task) {
+            public void onComplete(@NonNull Task<ArrayList<Album>> task) {
                 if (task.isSuccessful()) {
                     Context context = getContext();
                     arrayList = task.getResult();
-                    adapter = new SongRecycleViewAdapter(context, arrayList);
-                    fragmentTracksSearchBinding.recycleViewItems.setAdapter(adapter);
-                    fragmentTracksSearchBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
+                    adapter = new AlbumRecycleViewAdapter(context, arrayList);
+                    fragmentAlbumsSearchBinding.recycleViewItems.setAdapter(adapter);
+                    fragmentAlbumsSearchBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
                     RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(context);
-                    fragmentTracksSearchBinding.recycleViewItems.setLayoutManager(mLayoutManager);
-                    fragmentTracksSearchBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
+                    fragmentAlbumsSearchBinding.recycleViewItems.setLayoutManager(mLayoutManager);
+                    fragmentAlbumsSearchBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
 
                 } else {
                     //and more action --.--
