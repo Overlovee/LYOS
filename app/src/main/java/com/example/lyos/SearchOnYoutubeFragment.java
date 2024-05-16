@@ -114,11 +114,12 @@ public class SearchOnYoutubeFragment extends Fragment {
             @Override
             public void onResponse(String response) {
                 parseJsonData(response, context);
+                fragmentSearchOnYoutubeBinding.textViewSearchError.setVisibility(View.GONE);
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(context, "Có lỗi xảy ra khi tải dữ liệu", Toast.LENGTH_LONG).show();
+                fragmentSearchOnYoutubeBinding.textViewSearchError.setVisibility(View.VISIBLE);
             }
         });
         RequestQueue requestQueue = Volley.newRequestQueue(context);

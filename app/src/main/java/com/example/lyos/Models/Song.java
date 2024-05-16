@@ -1,5 +1,6 @@
 package com.example.lyos.Models;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 public class Song {
@@ -9,12 +10,12 @@ public class Song {
     private String imageFileName;
     private String description;
     private int duration;
-    private int favorites;
+    private ArrayList<String> likedBy;
     private int listens;
     private String type;
     private Date uploadDate;
     private String userID;
-    private String normalizedTitle; // Thêm trường normalizedTitle
+    private String normalizedTitle;
 
     public Song() {
         // Khởi tạo giá trị mặc định
@@ -24,7 +25,7 @@ public class Song {
         this.imageFileName = "";
         this.description = "";
         this.duration = 0;
-        this.favorites = 0;
+        this.likedBy = null;
         this.listens = 0;
         this.type = "";
         this.uploadDate = new Date();
@@ -32,14 +33,14 @@ public class Song {
         this.normalizedTitle = "";
     }
 
-    public Song(String title, String mp3FileName, String imageFileName, String description, int duration, int favorites, int listens, String type, Date uploadDate, String userID) {
+    public Song(String title, String mp3FileName, String imageFileName, String description, int duration, ArrayList<String> likedBy, int listens, String type, Date uploadDate, String userID) {
         this.id = "";
         this.title = title;
         this.mp3FileName = mp3FileName;
         this.imageFileName = imageFileName;
         this.description = description;
         this.duration = duration;
-        this.favorites = favorites;
+        this.likedBy = likedBy;
         this.listens = listens;
         this.type = type;
         this.uploadDate = uploadDate;
@@ -105,12 +106,12 @@ public class Song {
         this.duration = duration;
     }
 
-    public int getFavorites() {
-        return favorites;
+    public ArrayList<String> getLikedBy() {
+        return likedBy;
     }
 
-    public void setFavorites(int favorites) {
-        this.favorites = favorites;
+    public void setLikedBy(ArrayList<String> likedBy) {
+        this.likedBy = likedBy;
     }
 
     public int getListens() {

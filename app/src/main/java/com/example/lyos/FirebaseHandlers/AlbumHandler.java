@@ -62,9 +62,13 @@ public class AlbumHandler {
                 });
     }
     public Task<ArrayList<Album>> search(String searchString) {
+        return search(searchString, 30);
+    }
+    public Task<ArrayList<Album>> search(String searchString, int limit) {
         ArrayList<Album> list = new ArrayList<>();
         String normalizedSearchString = normalizeString(searchString);
         return collection.whereLessThanOrEqualTo("normalizedTitle", normalizedSearchString + "\uf8ff")
+                .limit(limit)
                 .get()
                 .continueWith(new Continuation<QuerySnapshot, ArrayList<Album>>() {
                     @Override
@@ -103,6 +107,27 @@ public class AlbumHandler {
                 }
             }
         });
+    }
+    public Task<ArrayList<Album>> searchByUserID(String id, int limit) {
+        ArrayList<Album> list = new ArrayList<>();
+        return collection.whereEqualTo("userID", id)
+                .limit(limit)
+                .get()
+                .continueWith(new Continuation<QuerySnapshot, ArrayList<Album>>() {
+                    @Override
+                    public ArrayList<Album> then(@NonNull Task<QuerySnapshot> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Album item = document.toObject(Album.class);
+                                if (item != null) {
+                                    item.setId(document.getId());
+                                    list.add(item);
+                                }
+                            }
+                        }
+                        return list;
+                    }
+                });
     }
     private String normalizeString(String input) {
         // Remove non-alphanumeric characters and convert to lowercase

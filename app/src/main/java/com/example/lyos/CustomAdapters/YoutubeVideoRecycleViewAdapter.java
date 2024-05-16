@@ -2,8 +2,10 @@ package com.example.lyos.CustomAdapters;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,13 +18,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.lyos.Models.Song;
-import com.example.lyos.Models.UserInfo;
 import com.example.lyos.Models.YoutubeVideo;
 import com.example.lyos.R;
-import com.example.lyos.databinding.OtherSongOptionsBottomSheetDialogLayoutBinding;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+import com.example.lyos.databinding.YoutubeOptionsBottomSheetDialogLayoutBinding;
 
 import java.util.ArrayList;
 
@@ -71,10 +69,10 @@ public class YoutubeVideoRecycleViewAdapter extends RecyclerView.Adapter<Youtube
             }
         });
     }
-    private OtherSongOptionsBottomSheetDialogLayoutBinding dialogLayoutBinding;
+    private YoutubeOptionsBottomSheetDialogLayoutBinding dialogLayoutBinding;
     private void showDialog(YoutubeVideo item) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        dialogLayoutBinding = OtherSongOptionsBottomSheetDialogLayoutBinding.inflate(inflater);
+        dialogLayoutBinding = YoutubeOptionsBottomSheetDialogLayoutBinding.inflate(inflater);
 
         final Dialog dialog = new Dialog(context);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -84,18 +82,33 @@ public class YoutubeVideoRecycleViewAdapter extends RecyclerView.Adapter<Youtube
 
         dialogLayoutBinding.textViewTitle.setText(item.getTitle());
         dialogLayoutBinding.textViewUserName.setText(item.getChannelTitle());
-//        LinearLayout layoutLike = dialog.findViewById(R.id.layoutLike);
-//        LinearLayout layoutAddToNextUp = dialog.findViewById(R.id.layoutAddToNextUp);
-//        LinearLayout layoutAddToPlaylist = dialog.findViewById(R.id.layoutAddToPlaylist);
-//        LinearLayout layoutGoToUserProfile = dialog.findViewById(R.id.layoutGoToUserProfile);
-//        LinearLayout layoutViewComment = dialog.findViewById(R.id.layoutViewComment);
 
-        dialogLayoutBinding.layoutLike.setOnClickListener(new View.OnClickListener() {
+        dialogLayoutBinding.layoutAddToNextUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 dialog.dismiss();
 
+            }
+        });
+        dialogLayoutBinding.layoutGoToYoutube.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Tạo URI với ID video YouTube
+                Uri youtubeUri = Uri.parse("https://www.youtube.com/watch?v=" + item.getVideoId());
+
+                // Tạo Intent để mở ứng dụng YouTube với URI đã tạo
+                Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, youtubeUri);
+
+                // Kiểm tra xem có ứng dụng YouTube được cài đặt trên thiết bị không
+                if (youtubeIntent.resolveActivity(context.getPackageManager()) != null) {
+                    // Mở ứng dụng YouTube
+                    context.startActivity(youtubeIntent);
+                } else {
+                    // Nếu không có ứng dụng YouTube, mở trình duyệt web và chuyển hướng đến video YouTube
+                    Intent webIntent = new Intent(Intent.ACTION_VIEW, youtubeUri);
+                    context.startActivity(webIntent);
+                }
             }
         });
 

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/customDarkColor"
-    tools:context=".ProfileFragment">
+    tools:context=".ProfileDetailFragment">
 
     <LinearLayout
         android:id="@+id/layoutHeader"
@@ -224,6 +224,37 @@
                                         android:textSize="16dp" />
                                 </LinearLayout>
 
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="@color/customDarkColor"
+                                    android:orientation="horizontal">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:gravity="center"
+                                        android:orientation="horizontal"
+                                        android:paddingVertical="10dp">
+
+                                        <TextView
+                                            android:id="@+id/textViewFollowAction"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:background="@drawable/rounded_button_view"
+                                            android:gravity="center"
+                                            android:paddingHorizontal="20dp"
+                                            android:paddingVertical="10dp"
+                                            android:text="Follow"
+                                            android:textAlignment="center"
+                                            android:textAllCaps="true"
+                                            android:textColor="@color/customDarkColor"
+                                            android:textSize="14dp"
+                                            android:textStyle="bold"
+                                            tools:ignore="TextSizeCheck" />
+                                    </LinearLayout>
+                                </LinearLayout>
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
@@ -235,7 +266,6 @@
                 android:background="#8A8A8A" />
 
             <LinearLayout
-                android:id="@+id/layoutTracks"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
@@ -263,61 +293,11 @@
                         android:paddingHorizontal="20dp"
                         android:textStyle="bold" />
                 </LinearLayout>
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recycleViewTrackItems"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/layoutAlbums"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    >
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Albums"
-                        android:textColor="@color/customPrimaryColor"
-                        android:textSize="20dp"
-                        android:paddingHorizontal="10dp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recycleViewAlbumItems"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/layoutPlaylists"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    >
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Playlists"
-                        android:textColor="@color/customPrimaryColor"
-                        android:textSize="20dp"
-                        android:paddingHorizontal="10dp"
-                        android:textStyle="bold" />
-                </LinearLayout>
                 <TextView
-                    android:id="@+id/textViewZeroPlaylists"
+                    android:id="@+id/textViewZeroTracks"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Click to create a playlist"
+                    android:text="There are no posts yet"
                     android:visibility="gone"
                     android:textAlignment="center"
                     android:textColor="@color/customPrimaryColor"
@@ -325,12 +305,11 @@
                     android:paddingHorizontal="10dp"
                     android:textStyle="bold" />
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recycleViewPlaylistItems"
+                    android:id="@+id/recycleViewTrackItems"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
             </LinearLayout>
             <LinearLayout
-                android:id="@+id/layoutLikes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">

@@ -70,7 +70,7 @@
                 app:cardCornerRadius="10dp">
 
                 <ImageView
-                    android:id="@+id/imageView"
+                    android:id="@+id/imageViewNowPlaying"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:scaleType="centerCrop"/>
@@ -99,6 +99,12 @@
                         android:textAlignment="textStart"
                         android:text="Title"
                         android:textColor="@color/customPrimaryColor"
+                        android:singleLine="true"
+                        android:ellipsize="marquee"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:scrollHorizontally="true"
+                        android:paddingHorizontal="6dp"
                         android:textSize="18dp"
                         android:textStyle="bold" />
 
@@ -107,6 +113,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textAlignment="textStart"
+                        android:singleLine="true"
+                        android:ellipsize="marquee"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:scrollHorizontally="true"
+                        android:paddingHorizontal="6dp"
                         android:text="Username"
                         android:textColor="@color/customSeccondaryColor"
                         android:textSize="8pt" />
@@ -120,21 +132,21 @@
 
                     <ImageView
                         android:id="@+id/preButtonPlayback"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:src="@drawable/previous"
                         />
                     <ImageView
                         android:id="@+id/stopButtonPlayback"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_marginHorizontal="10dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginHorizontal="15dp"
                         android:src="@drawable/play"
                         />
                     <ImageView
                         android:id="@+id/nextButtonPlayback"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:src="@drawable/next"
                         />
                 </LinearLayout>

@@ -2,7 +2,6 @@ package com.example.lyos.CustomAdapters;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
@@ -38,7 +37,7 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
         public ImageView imageViewMoreOptionsAction;
         public TextView textViewTitle;
         public TextView textViewUserName;
-        public TextView textViewDuration;
+        public TextView textViewTracks;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -46,7 +45,7 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
             imageViewMoreOptionsAction = itemView.findViewById(R.id.imageViewMoreOptionsAction);
             textViewTitle = itemView.findViewById(R.id.textViewTitle);
             textViewUserName = itemView.findViewById(R.id.textViewUserName);
-            textViewDuration = itemView.findViewById(R.id.textViewDuration);
+            textViewTracks = itemView.findViewById(R.id.textViewTracks);
         }
     }
 
@@ -57,7 +56,7 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
 
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_song_recycleview_item, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_album_recycleview_item, parent, false);
         return new MyViewHolder(itemView);
     }
 
@@ -66,7 +65,7 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
     public void onBindViewHolder(MyViewHolder holder, int position) {
         Album item = list.get(position);
         holder.textViewTitle.setText(item.getTitle());
-
+        holder.textViewTracks.setText("Album: " + String.valueOf(item.getSongList().size()) + " tracks");
         UserHandler userHandler = new UserHandler();
         userHandler.getInfoByID(item.getUserID()).addOnCompleteListener(new OnCompleteListener<UserInfo>() {
             @Override
@@ -103,10 +102,10 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
             @Override
             public void onClick(View v) {
                 // Kiểm tra xem context có phải là instance của MainActivity hay không
-//                if (context instanceof MainActivity) {
-//                    MainActivity mainActivity = (MainActivity) context;
-//                    mainActivity.setVisibleLayoutlNowPlaying();
-//                }
+                if (context instanceof MainActivity) {
+                    MainActivity mainActivity = (MainActivity) context;
+                    mainActivity.openAlbumDetailFragment(item);
+                }
             }
         });
     }

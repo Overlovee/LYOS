@@ -79,7 +79,6 @@ public class TracksSearchFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        arrayList = new ArrayList<>();
         fragmentTracksSearchBinding = FragmentTracksSearchBinding.inflate(getLayoutInflater());
         return fragmentTracksSearchBinding.getRoot();
     }

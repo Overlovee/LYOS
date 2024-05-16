@@ -5,4 +5,5 @@
     <color name="customDarkColor">#0C0C0C</color>
     <color name="customPrimaryColor">#FFFFFF</color>
     <color name="customSeccondaryColor">#C3C3C3</color>
+    <color name="customActionColor">#7DD8D8</color>
 </resources>

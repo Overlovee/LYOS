@@ -1,12 +1,32 @@
 package com.example.lyos;
 
+import android.content.Context;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
+import com.example.lyos.CustomAdapters.UserRecycleViewAdapter;
+import com.example.lyos.FirebaseHandlers.SongHandler;
+import com.example.lyos.FirebaseHandlers.UserHandler;
+import com.example.lyos.Models.Song;
+import com.example.lyos.Models.UserInfo;
+import com.example.lyos.databinding.FragmentTracksSearchBinding;
+import com.example.lyos.databinding.FragmentUsersSearchBinding;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -14,6 +34,8 @@ import android.view.ViewGroup;
  * create an instance of this fragment.
  */
 public class UsersSearchFragment extends Fragment {
+    private String searchString = "";
+    private FragmentUsersSearchBinding fragmentUsersSearchBinding;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -52,6 +74,7 @@ public class UsersSearchFragment extends Fragment {
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
+            this.searchString = getArguments().getString("search_string", "");
         }
     }
 
@@ -59,6 +82,37 @@ public class UsersSearchFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_users_search, container, false);
+        fragmentUsersSearchBinding = FragmentUsersSearchBinding.inflate(getLayoutInflater());
+        return fragmentUsersSearchBinding.getRoot();
+    }
+    private ArrayList<UserInfo> arrayList;
+    UserRecycleViewAdapter adapter;
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        arrayList = new ArrayList<>();
+        getDataFromFirestore();
+    }
+
+    private void getDataFromFirestore() {
+        UserHandler handler = new UserHandler();
+        handler.search(searchString).addOnCompleteListener(new OnCompleteListener<ArrayList<UserInfo>>() {
+            @Override
+            public void onComplete(@NonNull Task<ArrayList<UserInfo>> task) {
+                if (task.isSuccessful()) {
+                    Context context = getContext();
+                    arrayList = task.getResult();
+                    adapter = new UserRecycleViewAdapter(context, arrayList);
+                    fragmentUsersSearchBinding.recycleViewItems.setAdapter(adapter);
+                    fragmentUsersSearchBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
+                    RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(context);
+                    fragmentUsersSearchBinding.recycleViewItems.setLayoutManager(mLayoutManager);
+                    fragmentUsersSearchBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
+
+                } else {
+                    //and more action --.--
+                }
+            }
+        });
     }
 }

@@ -3,12 +3,99 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/customDarkColor"
+    android:paddingHorizontal="10dp"
+    android:paddingVertical="20dp"
     android:orientation="vertical"
     tools:context=".AllSearchResultFragment">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycleViewItems"
+    <LinearLayout
+        android:id="@+id/layoutResults"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <LinearLayout
+            android:id="@+id/layoutTopResults"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/customPrimaryColor"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                android:text="Top Results"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycleViewTopResultItems"
+                android:paddingVertical="6dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/layoutTracks"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/customPrimaryColor"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                android:text="Tracks"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycleViewTrackItems"
+                android:paddingVertical="6dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/layoutUsers"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/customPrimaryColor"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                android:text="Users"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycleViewUserItems"
+                android:paddingVertical="6dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/layoutSearchedOnYoutubeVideos"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/customPrimaryColor"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                android:text="On Youtube"/>
+            <TextView
+                android:id="@+id/textViewSearchError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/customPrimaryColor"
+                android:textSize="20dp"
+                android:textAlignment="center"
+                android:visibility="gone"
+                android:textStyle="bold"
+                android:text="Something went wrong @@!"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycleViewSearchedOnYoutubeVideoItems"
+                android:paddingVertical="6dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

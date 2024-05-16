@@ -8,6 +8,16 @@
     android:background="@color/customDarkColor"
     tools:context=".SearchOnYoutubeFragment">
 
+    <TextView
+        android:id="@+id/textViewSearchError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/customPrimaryColor"
+        android:textSize="20dp"
+        android:textAlignment="center"
+        android:visibility="gone"
+        android:textStyle="bold"
+        android:text="Something went wrong @@!"/>
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycleViewItems"
         android:layout_width="match_parent"
