@@ -1,15 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@color/customDarkColor"
+    android:paddingTop="15dp"
+    android:paddingHorizontal="10dp"
     tools:context=".AlbumsFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="album" />
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="My Albums"
+            android:textColor="@color/customPrimaryColor"
+            android:textSize="20dp"
+            android:textStyle="bold" />
+        <LinearLayout
+            android:id="@+id/layoutCreateNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp"
+            tools:ignore="MissingConstraints">
 
-</FrameLayout>
+            <androidx.cardview.widget.CardView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                app:cardCornerRadius="0dp">
+
+                <ImageView
+                    android:id="@+id/imageViewAddMore"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:scaleType="centerInside"
+                    android:background="#838383"
+                    android:src="@drawable/plus"/>
+
+            </androidx.cardview.widget.CardView>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:layout_width="match_parent"
+                android:layout_gravity="center"
+                android:layout_height="match_parent">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:text="Create new"
+                    android:textColor="@color/customPrimaryColor"
+                    android:textSize="20dp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#8A8A8A" />
+    <TextView
+        android:id="@+id/textViewZero"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No albums at all"
+        android:visibility="gone"
+        android:textAlignment="center"
+        android:textColor="@color/customPrimaryColor"
+        android:textSize="20dp"
+        android:paddingHorizontal="10dp"
+        android:textStyle="bold" />
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycleViewItems"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</LinearLayout>

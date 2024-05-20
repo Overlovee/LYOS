@@ -12,7 +12,7 @@ public class Song {
     private int duration;
     private ArrayList<String> likedBy;
     private int listens;
-    private String type;
+    private String tag;
     private Date uploadDate;
     private String userID;
     private String normalizedTitle;
@@ -27,13 +27,13 @@ public class Song {
         this.duration = 0;
         this.likedBy = null;
         this.listens = 0;
-        this.type = "";
+        this.tag = "#pop";
         this.uploadDate = new Date();
         this.userID = "";
         this.normalizedTitle = "";
     }
 
-    public Song(String title, String mp3FileName, String imageFileName, String description, int duration, ArrayList<String> likedBy, int listens, String type, Date uploadDate, String userID) {
+    public Song(String title, String mp3FileName, String imageFileName, String description, int duration, ArrayList<String> likedBy, int listens, String tag, Date uploadDate, String userID) {
         this.id = "";
         this.title = title;
         this.mp3FileName = mp3FileName;
@@ -42,7 +42,7 @@ public class Song {
         this.duration = duration;
         this.likedBy = likedBy;
         this.listens = listens;
-        this.type = type;
+        this.tag = tag;
         this.uploadDate = uploadDate;
         this.userID = userID;
         this.normalizedTitle = normalizeTitle(title);
@@ -122,12 +122,12 @@ public class Song {
         this.listens = listens;
     }
 
-    public String getType() {
-        return type;
+    public String getTag() {
+        return tag;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public Date getUploadDate() {

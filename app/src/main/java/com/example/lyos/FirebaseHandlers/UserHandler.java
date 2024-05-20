@@ -26,6 +26,18 @@ public class UserHandler {
         db = FirebaseFirestore.getInstance();
         collection = db.collection(COLLECTION_NAME);
     }
+    public Task<Void> updateUserName(String userId, String newName) {
+        return FirebaseFirestore.getInstance().collection("users").document(userId)
+                .update("username", newName);
+    }
+    public Task<Void> updateProfilePhoto(String userId, String photoUrl) {
+        return FirebaseFirestore.getInstance().collection("users").document(userId)
+                .update("profilePhoto", photoUrl);
+    }
+    public Task<Void> updateProfileBanner(String userId, String photoUrl) {
+        return FirebaseFirestore.getInstance().collection("users").document(userId)
+                .update("profileBanner", photoUrl);
+    }
 
     public Task<ArrayList<UserInfo>> getAllData() {
         ArrayList<UserInfo> list = new ArrayList<>();

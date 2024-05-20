@@ -8,19 +8,17 @@
 
     <ImageView
         android:id="@+id/imageViewItem"
-        android:layout_width="160dp"
-        android:layout_height="160dp"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
         android:layout_weight="0"
         android:adjustViewBounds="true"
         android:scaleType="centerCrop"
         android:background="@color/customSeccondaryColor"
-        android:layout_marginHorizontal="30dp"
-        android:layout_marginTop="30dp"/>
+        android:layout_marginTop="10dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="30dp"
         android:layout_marginTop="10dp"
         android:orientation="vertical">
 

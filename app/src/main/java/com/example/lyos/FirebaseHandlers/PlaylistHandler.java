@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 public class PlaylistHandler {
     private static final String COLLECTION_NAME = "playlists";
-
+    private final static int LIMIT = 30;
     private FirebaseFirestore db;
     private CollectionReference collection;
 
@@ -62,7 +62,7 @@ public class PlaylistHandler {
                 });
     }
     public Task<ArrayList<Playlist>> search(String searchString) {
-        return search(searchString, 30);
+        return search(searchString, LIMIT);
     }
     public Task<ArrayList<Playlist>> search(String searchString, int limit) {
         ArrayList<Playlist> list = new ArrayList<>();
@@ -107,6 +107,10 @@ public class PlaylistHandler {
                 }
             }
         });
+    }
+    public Task<ArrayList<Playlist>> searchByUserID(String id) {
+
+        return searchByUserID(id, 30);
     }
     public Task<ArrayList<Playlist>> searchByUserID(String id, int limit) {
         ArrayList<Playlist> list = new ArrayList<>();

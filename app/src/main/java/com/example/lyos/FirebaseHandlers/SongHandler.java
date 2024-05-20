@@ -16,6 +16,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class SongHandler {
@@ -44,28 +45,6 @@ public class SongHandler {
                 return list;
             }
         });
-    }
-
-    public void addSong(Song item) {
-//        Map<String, Object> item = new HashMap<>();
-//        item.put("first", "Alan");
-//        item.put("middle", "Mathison");
-//        item.put("last", "Turing");
-//        item.put("born", 1912);
-
-        collection.add(item)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-//                        Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        e.printStackTrace();
-                    }
-                });
     }
     public Task<ArrayList<Song>> search(String searchString) {
         return search(searchString, 30);
@@ -176,13 +155,53 @@ public class SongHandler {
         return input.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
     }
 
+    public Task<Void> addSong(Song item) {
+        item.setId(null);
+        item.setNormalizedTitle(normalizeString(item.getTitle()));
+        item.setUploadDate(new Date());
+        return collection.add(item)
+                .continueWithTask(new Continuation<DocumentReference, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<DocumentReference> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            // Nếu thêm thành công, trả về null
+                            return Tasks.forResult(null);
+                        } else {
+                            // Nếu thêm tài liệu không thành công, ném ra ngoại lệ
+                            throw task.getException();
+                        }
+                    }
+                });
+    }
 
-    public void updateSong(String id, Song item) {
-        collection.document(id)
-                .set(item);
+    public Task<Void> updateSong(String id, Song item) {
+        return collection.document(id)
+                .set(item)
+                .continueWithTask(new Continuation<Void, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<Void> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            return Tasks.forResult(null); // Thành công, trả về Task<Void> trống
+                        } else {
+                            throw task.getException(); // Thất bại, ném ra ngoại lệ
+                        }
+                    }
+                });
     }
-    public void deleteSong(String id) {
-        collection.document(id)
-                .delete();
+
+    public Task<Void> deleteSong(String id) {
+        return collection.document(id)
+                .delete()
+                .continueWithTask(new Continuation<Void, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<Void> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            return Tasks.forResult(null); // Thành công, trả về Task<Void> trống
+                        } else {
+                            throw task.getException(); // Thất bại, ném ra ngoại lệ
+                        }
+                    }
+                });
     }
+
 }

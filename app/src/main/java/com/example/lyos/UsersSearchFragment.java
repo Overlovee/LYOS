@@ -15,13 +15,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.CustomAdapters.UserRecycleViewAdapter;
-import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.FirebaseHandlers.UserHandler;
-import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
-import com.example.lyos.databinding.FragmentTracksSearchBinding;
 import com.example.lyos.databinding.FragmentUsersSearchBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;

@@ -2,12 +2,14 @@ package com.example.lyos;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
+import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -17,7 +19,10 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -25,32 +30,43 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.SearchView;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
+import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.FirebaseHandlers.UserHandler;
 import com.example.lyos.Models.AccountUtils;
 import com.example.lyos.Models.Album;
 import com.example.lyos.Models.Playlist;
+import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.databinding.ActivityMainBinding;
 import com.example.lyos.databinding.CurrentlyPlayingListBottomSheetDialogLayoutBinding;
 import com.example.lyos.databinding.CurrentlyPlayingSongDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     private static final String ACCOUNT_TYPE = "com.example.lyos.account";
     private ActivityMainBinding activityMainBinding;
     private String account = "Ykd4dpxIKqjqpsAupw2J";
     private UserInfo user;
+    SongHandler songHandler;
     public void setAccount(String id){
         this.account = id;
         AccountUtils.saveAccount(MainActivity.this, account);
@@ -61,13 +77,29 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         activityMainBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(activityMainBinding.getRoot());
-
+        songHandler = new SongHandler();
         activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
 
         Intent intent = new Intent(MainActivity.this, SplashActivity.class);
         startActivity(intent);
 
         //setAccount(account);
+
+        // Kiểm tra xem có dữ liệu tài khoản đã được lưu trữ hay không
+        ProfileDataLoader.loadProfileData(MainActivity.this, new ProfileDataLoader.OnProfileDataLoadedListener() {
+            @Override
+            public void onProfileDataLoaded(UserInfo u) {
+                user = u;
+                if (user != null){
+                } else {
+                    finish();
+                }
+            }
+            @Override
+            public void onProfileDataLoadFailed() {
+                finish();
+            }
+        });
 
         setSupportActionBar(activityMainBinding.toolbar);
         activityMainBinding.bottomNavigationMain.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -84,14 +116,17 @@ public class MainActivity extends AppCompatActivity {
                 } else if (id == R.id.navigation_profile) {
                     activityMainBinding.toolbar.setVisibility(View.GONE);
                     fragment = new ProfileFragment();
+                } else if (id == R.id.navigation_albums) {
+                    activityMainBinding.textViewFragmentTitle.setVisibility(View.GONE);
+                    activityMainBinding.searchBar.setVisibility(View.VISIBLE);
+                    activityMainBinding.searchBar.setIconifiedByDefault(false);
+                    fragment = new AlbumsFragment();
                 }
                 else {
                     activityMainBinding.textViewFragmentTitle.setVisibility(View.VISIBLE);
                     activityMainBinding.searchBar.setVisibility(View.GONE);
                     if (id == R.id.navigation_home) {
                         fragment = new HomeFragment();
-                    } else if (id == R.id.navigation_albums) {
-                        fragment = new AlbumsFragment();
                     } else if (id == R.id.navigation_playlists) {
                         fragment = new PlaylistsFragment();
                     } else {
@@ -109,8 +144,7 @@ public class MainActivity extends AppCompatActivity {
         AddEvents();
     }
 
-    public void loadFragment(Fragment fragment)
-    {
+    public void loadFragment(Fragment fragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(activityMainBinding.frameFragment.getId(), fragment);
         transaction.addToBackStack(null);
@@ -151,16 +185,46 @@ public class MainActivity extends AppCompatActivity {
                 clearPlaylist();
             }
         });
+        activityMainBinding.preButtonPlayback.setOnClickListener(new View.OnClickListener() {
+            @OptIn(markerClass = UnstableApi.class)
+            @Override
+            public void onClick(View v) {
+                // Kiểm tra xem có phải đang ở đầu danh sách không
+                if (player.hasPrevious()) {
+                    // Nếu có, quay lại bài hát trước đó trong danh sách
+                    player.previous();
+                } else {
+                    // Nếu không, chuyển đến bài hát cuối cùng trong danh sách
+                    int lastIndex = player.getMediaItemCount() - 1;
+                    player.seekTo(lastIndex, 0);
+                }
+            }
+        });
+        activityMainBinding.nextButtonPlayback.setOnClickListener(new View.OnClickListener() {
+            @OptIn(markerClass = UnstableApi.class)
+            @Override
+            public void onClick(View v) {
+                int currentIndex = player.getCurrentMediaItemIndex();
+                int lastIndex = player.getMediaItemCount() - 1;
+
+                // Nếu đang ở bài hát cuối cùng, chuyển đến bài hát đầu tiên
+                if (currentIndex == lastIndex) {
+                    player.seekToDefaultPosition();
+                } else {
+                    player.next();
+                }
+            }
+        });
         activityMainBinding.stopButtonPlayback.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (player.getPlayWhenReady()) {
                     // Nếu player đang phát, dừng phát
-                    player.pause();
+                    pause();
                     updatePlayPauseButton(false);
                 } else {
                     // Nếu player đang dừng, bắt đầu phát
-                    player.play();
+                    play();
                     updatePlayPauseButton(true);
                 }
             }
@@ -174,6 +238,11 @@ public class MainActivity extends AppCompatActivity {
     }
     private CurrentlyPlayingSongDialogLayoutBinding currentlyPlayingSongDialogLayoutBinding;
     private void showCurrentPlayingSongDialog() {
+        if (currentSongArrayList.isEmpty()) {
+            // Xử lý trường hợp danh sách rỗng
+            Log.e("showCurrentPlayingSongDialog", "currentSongArrayList is empty.");
+            return;
+        }
         Song item = currentSongArrayList.get(player.getCurrentMediaItemIndex());
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
         currentlyPlayingSongDialogLayoutBinding = CurrentlyPlayingSongDialogLayoutBinding.inflate(inflater);
@@ -197,7 +266,152 @@ public class MainActivity extends AppCompatActivity {
         currentlyPlayingSongDialogLayoutBinding.textViewTitle.setText(item.getTitle());
         currentlyPlayingSongDialogLayoutBinding.textViewUserName.setText(currentUserInfo.getUsername());
         currentlyPlayingSongDialogLayoutBinding.textViewDescription.setText(item.getDescription());
-//        LinearLayout layoutLike = dialog.findViewById(R.id.layoutLike);
+        if (player.getPlayWhenReady()) {
+            // Nếu player đang phát, dừng phát
+            updatePlayPauseButton(true);
+        } else {
+            // Nếu player đang dừng, bắt đầu phát
+            updatePlayPauseButton(false);
+        }
+        updateSeekBar();
+        if(item.getLikedBy() != null){
+            if(item.getLikedBy().contains(user.getId())){
+                currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.hearted);
+            }
+            else {
+                currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.heart);
+            }
+        } else {
+            currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.heart);
+        }
+        currentlyPlayingSongDialogLayoutBinding.buttonLike.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Kiểm tra xem người dùng đã thích bài hát hay chưa
+                if(item.getLikedBy() != null){
+                    if (item.getLikedBy().contains(user.getId())) {
+                        // Nếu đã thích, hủy thích bằng cách loại bỏ ID của người dùng khỏi danh sách thích
+                        item.getLikedBy().remove(user.getId());
+                        currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.heart);
+                    } else {
+                        // Nếu chưa thích, thêm ID của người dùng vào danh sách thích
+                        item.getLikedBy().add(user.getId());
+                        currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.hearted);
+                    }
+                } else {
+                    item.setLikedBy(new ArrayList<>());
+                    item.getLikedBy().add(user.getId());
+                    currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.hearted);
+                }
+
+                // Sau khi cập nhật trạng thái thích của bài hát,
+                // gọi hàm updateSong để lưu thay đổi vào cơ sở dữ liệu
+                // Ví dụ:
+                songHandler.updateSong(item.getId(), item)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                            }
+                        });
+            }
+        });
+
+        currentlyPlayingSongDialogLayoutBinding.stopButtonPlayback.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (player.getPlayWhenReady()) {
+                    // Nếu player đang phát, dừng phát
+                    pause();
+                    updatePlayPauseButton(false);
+                } else {
+                    // Nếu player đang dừng, bắt đầu phát
+                    play();
+                    updatePlayPauseButton(true);
+                }
+            }
+        });
+
+        // Lắng nghe sự kiện thay đổi vị trí của SeekBar
+        currentlyPlayingSongDialogLayoutBinding.seekBarDuration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            boolean userSeeking = false;
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                // Kiểm tra xem sự kiện này được kích hoạt bởi người dùng hay không
+                if (fromUser) {
+                    userSeeking = true;
+                    // Cập nhật vị trí phát của media đến vị trí mới được chọn trên SeekBar
+                    player.seekTo(progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                userSeeking = false;
+            }
+        });
+        currentlyPlayingSongDialogLayoutBinding.buttonRepeatPlayingList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Kiểm tra trạng thái hiện tại của chế độ lặp lại
+                int currentRepeatMode = player.getRepeatMode();
+
+                // Chuyển đổi chế độ lặp lại
+                switch (currentRepeatMode) {
+                    case Player.REPEAT_MODE_ALL:
+                        // Nếu đang ở chế độ lặp lại tất cả các bài hát, chuyển sang chế độ lặp lại một bài hát
+                        player.setRepeatMode(Player.REPEAT_MODE_ONE);
+                        break;
+                    default:
+                        // Mặc định, chuyển sang chế độ lặp lại tất cả các bài hát
+                        player.setRepeatMode(Player.REPEAT_MODE_ALL);
+                        break;
+                }
+                updateRepeatButtonUI(player.getRepeatMode());
+            }
+        });
+        currentlyPlayingSongDialogLayoutBinding.nextButtonPlayback.setOnClickListener(new View.OnClickListener() {
+            @OptIn(markerClass = UnstableApi.class)
+            @Override
+            public void onClick(View v) {
+                int currentIndex = player.getCurrentMediaItemIndex();
+                int lastIndex = player.getMediaItemCount() - 1;
+
+                // Nếu đang ở bài hát cuối cùng, chuyển đến bài hát đầu tiên
+                if (currentIndex == lastIndex) {
+                    player.seekToDefaultPosition();
+                } else {
+                    player.next();
+                }
+            }
+        });
+        currentlyPlayingSongDialogLayoutBinding.preButtonPlayback.setOnClickListener(new View.OnClickListener() {
+            @OptIn(markerClass = UnstableApi.class)
+            @Override
+            public void onClick(View v) {
+                // Kiểm tra xem có phải đang ở đầu danh sách không
+                if (player.hasPrevious()) {
+                    // Nếu có, quay lại bài hát trước đó trong danh sách
+                    player.previous();
+                } else {
+                    // Nếu không, chuyển đến bài hát cuối cùng trong danh sách
+                    int lastIndex = player.getMediaItemCount() - 1;
+                    player.seekTo(lastIndex, 0);
+                }
+                handler.removeCallbacks(updateSeekBarRunnable);
+                updateSeekBar();
+                handler.post(updateSeekBarRunnable);
+            }
+        });
 
         currentlyPlayingSongDialogLayoutBinding.buttonBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -211,7 +425,6 @@ public class MainActivity extends AppCompatActivity {
                 showCurrentPlayingListDialog();
             }
         });
-
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -221,6 +434,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private CurrentlyPlayingListBottomSheetDialogLayoutBinding currentlyPlayingListDialogLayoutBinding;
     private void showCurrentPlayingListDialog() {
+
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
         currentlyPlayingListDialogLayoutBinding = CurrentlyPlayingListBottomSheetDialogLayoutBinding.inflate(inflater);
 
@@ -251,7 +465,6 @@ public class MainActivity extends AppCompatActivity {
     public void clearFocus(){
         activityMainBinding.searchBar.clearFocus();
     }
-
     @Override
     protected void onDestroy() {
         clearPlaylist();
@@ -266,12 +479,15 @@ public class MainActivity extends AppCompatActivity {
     }
     //Player set up
     private ExoPlayer player;
+    Handler handler = new Handler();
+    private Runnable updateSeekBarRunnable;
     private ArrayList<Song> currentSongArrayList;
     private UserInfo currentUserInfo;
-    private void setVisibleLayoutlNowPlaying() {
-        if (activityMainBinding.layoutNowPlaying.getVisibility() == View.GONE) {
-            activityMainBinding.layoutNowPlaying.setVisibility(View.VISIBLE);
-            // Khởi tạo player nếu chưa được khởi tạo
+    private void setVisibleLayoutNowPlaying(boolean visible) {
+        if (visible) {
+            if (activityMainBinding.layoutNowPlaying.getVisibility() == View.GONE) {
+                activityMainBinding.layoutNowPlaying.setVisibility(View.VISIBLE);
+            }
             if (player == null) {
                 player = new ExoPlayer.Builder(MainActivity.this).build();
                 initializePlayerListener();
@@ -279,11 +495,15 @@ public class MainActivity extends AppCompatActivity {
             if (currentSongArrayList == null) {
                 currentSongArrayList = new ArrayList<>();
             }
+        } else {
+            if (activityMainBinding.layoutNowPlaying.getVisibility() == View.VISIBLE) {
+                activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
+            }
         }
     }
     public void setAudioNowPlaying(Song item) {
         // Hiển thị layout Now Playing nếu chưa hiển thị
-        setVisibleLayoutlNowPlaying();
+        setVisibleLayoutNowPlaying(true);
         // Thêm bài hát vào danh sách hiện tại
         currentSongArrayList.add(item);
         // Tạo đường dẫn tới tệp mp3
@@ -297,9 +517,10 @@ public class MainActivity extends AppCompatActivity {
             // Thêm MediaItem vào player
             player.addMediaItem(mediaItem);
             // Chuẩn bị player và phát ngay bài hát vừa thêm vào
+            player.setRepeatMode(Player.REPEAT_MODE_ALL);
             player.prepare();
             player.seekTo(0, C.TIME_UNSET); // Nhảy đến bài hát mới nhất
-            player.play();
+            play();
 
             // Cập nhật UI với thông tin bài hát hiện tại
             updateNowPlayingUI(item);
@@ -308,19 +529,96 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "Error: Cannot load mp3!", Toast.LENGTH_LONG).show();
         });
     }
+    public void playNewPlaylist(ArrayList<Song> songArrayList) {
+        // Kiểm tra nếu songArrayList là null hoặc trống
+        if (songArrayList == null || songArrayList.isEmpty()) {
+            Log.e("playNewPlaylist", "Song list is null or empty.");
+            return;
+        }
+
+        // Initialize the player if it's null
+        if (player == null) {
+            player = new ExoPlayer.Builder(MainActivity.this).build();
+            // Initialize the player listener
+            initializePlayerListener();
+        } else {
+            // Clear the current playlist and stop the player
+            clearPlaylist();
+            if (player == null) {
+                player = new ExoPlayer.Builder(MainActivity.this).build();
+                // Initialize the player listener
+                initializePlayerListener();
+            }
+        }
+        // Cập nhật currentSongArrayList với danh sách mới
+        currentSongArrayList = songArrayList;
+        // Initialize a list to store all MediaItems
+        List<MediaItem> mediaItems = Collections.synchronizedList(new ArrayList<>());
+        // Initialize a list to store all download tasks
+        List<Task<Uri>> downloadTasks = new ArrayList<>();
+
+        // Iterate through the song list and create download tasks for each song
+        for (Song song : songArrayList) {
+            String mp3Path = "mp3s/" + song.getMp3FileName();
+            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(mp3Path);
+            Task<Uri> downloadTask = storageRef.getDownloadUrl();
+            downloadTasks.add(downloadTask);
+        }
+
+        // Wait for all download tasks to complete
+        Tasks.whenAllSuccess(downloadTasks).addOnSuccessListener(results -> {
+            for (int i = 0; i < results.size(); i++) {
+                Uri uri = (Uri) results.get(i);
+                // Create a MediaItem from the download URL
+                MediaItem mediaItem = MediaItem.fromUri(uri);
+                mediaItems.add(mediaItem);
+            }
+
+            // Kiểm tra nếu mediaItems không bị null hoặc trống
+            if (mediaItems.isEmpty()) {
+                Log.e("playNewPlaylist", "Media items list is empty.");
+                return;
+            }
+
+            Log.d("playNewPlaylist", "Media items added: " + mediaItems.size());
+
+            // Add all MediaItems to the player and start playback from the beginning
+            try {
+                Log.d("playNewPlaylist", "Adding media items to player.");
+                player.addMediaItems(mediaItems);
+                player.setRepeatMode(Player.REPEAT_MODE_ALL);
+                player.prepare();
+                play();
+                setVisibleLayoutNowPlaying(true);
+
+                // Update the UI for the currently playing song
+                if (!songArrayList.isEmpty()) {
+                    updateNowPlayingUI(songArrayList.get(0));
+                }
+            } catch (Exception e) {
+                Log.e("playNewPlaylist", "Error adding media items to player", e);
+            }
+        }).addOnFailureListener(exception -> {
+            // Handle any errors
+            Log.e("playNewPlaylist", "Failed to get download URLs", exception);
+        });
+    }
     private void updateNowPlayingUI(Song song) {
         // Cập nhật hình ảnh bài hát
         String imagePath = "images/" + song.getImageFileName();
         StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
         storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
             Glide.with(MainActivity.this).load(uri).into(activityMainBinding.imageViewNowPlaying);
+            if(currentlyPlayingSongDialogLayoutBinding != null){
+                Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewSong);
+                Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewBackGround);
+            }
         }).addOnFailureListener(exception -> {
             // Handle any errors
         });
 
         // Cập nhật tiêu đề bài hát
         activityMainBinding.textViewTitle.setText(song.getTitle());
-
         // Cập nhật tên người dùng
         UserHandler userHandler = new UserHandler();
         userHandler.getInfoByID(song.getUserID()).addOnCompleteListener(new OnCompleteListener<UserInfo>() {
@@ -330,6 +628,23 @@ public class MainActivity extends AppCompatActivity {
                     currentUserInfo = task.getResult();
                     if (currentUserInfo != null) {
                         activityMainBinding.textViewUserName.setText(currentUserInfo.getUsername());
+                        if(currentlyPlayingSongDialogLayoutBinding != null){
+                            currentlyPlayingSongDialogLayoutBinding.textViewTitle.setText(song.getTitle());
+                            currentlyPlayingSongDialogLayoutBinding.textViewUserName.setText(currentUserInfo.getUsername());
+                            currentlyPlayingSongDialogLayoutBinding.textViewDescription.setText(song.getDescription());
+                            if(song.getLikedBy() != null){
+                                if(song.getLikedBy().contains(user.getId())){
+                                    currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.hearted);
+                                }
+                                else {
+                                    currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.heart);
+                                }
+                            } else {
+                                currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.heart);
+                            }
+                            pause();
+                            play();
+                        }
                     } else {
                         activityMainBinding.textViewUserName.setText("Unknown");
                     }
@@ -339,22 +654,58 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    private void updateRepeatButtonUI(int repeatMode){
+        if (currentlyPlayingSongDialogLayoutBinding != null) {
+            switch (repeatMode) {
+                case Player.REPEAT_MODE_ONE:
+                    currentlyPlayingSongDialogLayoutBinding.buttonRepeatPlayingList.setImageResource(R.drawable.repeat_once);
+                    break;
+                case Player.REPEAT_MODE_ALL:
+                    currentlyPlayingSongDialogLayoutBinding.buttonRepeatPlayingList.setImageResource(R.drawable.repeat);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
     private void initializePlayerListener() {
+        player.setRepeatMode(Player.REPEAT_MODE_ALL);
         player.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int state) {
                 updatePlayPauseButton(player.getPlayWhenReady() && state == Player.STATE_READY);
+                if (state == Player.STATE_READY) {
+                    if (currentlyPlayingSongDialogLayoutBinding != null) {
+                        long duration = player.getDuration();
+                        currentlyPlayingSongDialogLayoutBinding.seekBarDuration.setMax((int) duration);
+                    }
+                    if (player.getPlayWhenReady()) {
+                        updateSeekBar();
+                    } else {
+
+                    }
+                } else if (state == Player.STATE_ENDED) {
+
+                }
             }
+
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                 if (mediaItem != null) {
                     // Lấy index của bài hát hiện tại
                     int currentIndex = player.getCurrentMediaItemIndex();
-                    // Lấy bài hát từ danh sách dựa trên index
-                    Song currentSong = currentSongArrayList.get(currentIndex);
 
-                    // Cập nhật UI với thông tin bài hát hiện tại
-                    updateNowPlayingUI(currentSong);
+                    // Kiểm tra currentSongArrayList không null và index hợp lệ
+                    if (currentSongArrayList != null && currentIndex >= 0 && currentIndex < currentSongArrayList.size()) {
+                        // Lấy bài hát từ danh sách dựa trên index
+                        Song currentSong = currentSongArrayList.get(currentIndex);
+
+                        // Cập nhật UI với thông tin bài hát hiện tại
+                        updateNowPlayingUI(currentSong);
+                    } else {
+                        // Log lỗi nếu currentSongArrayList bị null hoặc index không hợp lệ
+                        Log.e("onMediaItemTransition", "currentSongArrayList is null or index out of bounds. currentIndex: " + currentIndex);
+                    }
                 }
             }
         });
@@ -362,47 +713,82 @@ public class MainActivity extends AppCompatActivity {
     private void updatePlayPauseButton(boolean isPlaying) {
         if (isPlaying) {
             activityMainBinding.stopButtonPlayback.setImageResource(R.drawable.pause);
+            if (currentlyPlayingSongDialogLayoutBinding != null) {
+                currentlyPlayingSongDialogLayoutBinding.stopButtonPlayback.setImageResource(R.drawable.pause_button);
+            }
         } else {
             activityMainBinding.stopButtonPlayback.setImageResource(R.drawable.play);
+            if (currentlyPlayingSongDialogLayoutBinding != null) {
+                currentlyPlayingSongDialogLayoutBinding.stopButtonPlayback.setImageResource(R.drawable.play_button);
+            }
+            handler.post(updateSeekBarRunnable);
         }
     }
-    public void playNewPlaylist(ArrayList<Song> songArrayList) {
-        // Initialize the player if it's null
-        if (player == null) {
-            player = new ExoPlayer.Builder(MainActivity.this).build();
-            // Initialize the player listener
-            initializePlayerListener();
-        }
-        else{
-            // Clear the current playlist and stop the player
-            clearPlaylist();
-        }
+    // Phương thức để cập nhật seekBar và textViewDuration
+    private void updateSeekBar() {
+        if (handler != null) {
+            updateSeekBarRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    if (player != null && player.isPlaying()) {
+                        // Lấy thời gian hiện tại của media đang phát
+                        long currentPosition = player.getCurrentPosition();
+                        // Lấy thời gian tổng cộng của media đang phát
+                        long totalDuration = player.getDuration();
 
-        // Iterate through the song list and add each song to the player
-        for (int i = 0; i < songArrayList.size(); i++) {
-            Song song = songArrayList.get(i);
-            String mp3Path = "mp3s/" + song.getMp3FileName();
-            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(mp3Path);
-            int finalI = i;
-            storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                MediaItem mediaItem = MediaItem.fromUri(uri);
-                player.addMediaItem(finalI, mediaItem);
+                        // Tính thời gian còn lại
+                        long remainingTime = totalDuration - currentPosition;
 
-                // If this is the last song in the list, prepare and start the player
-                if (finalI == songArrayList.size() - 1) {
-                    player.prepare();
-                    player.play();
-                    setVisibleLayoutlNowPlaying();
+                        // Chuyển đổi thời gian còn lại thành định dạng phút:giây
+                        long minutes = TimeUnit.MILLISECONDS.toMinutes(remainingTime);
+                        long seconds = TimeUnit.MILLISECONDS.toSeconds(remainingTime) - TimeUnit.MINUTES.toSeconds(minutes);
+
+                        // Thiết lập giá trị tối đa cho seekBar
+                        activityMainBinding.seekBar.setMax((int) totalDuration);
+                        activityMainBinding.seekBar.setProgress((int) currentPosition);
+
+                        if (currentlyPlayingSongDialogLayoutBinding != null) {
+                            String remainingTimeText = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
+                            currentlyPlayingSongDialogLayoutBinding.textViewDuration.setText(remainingTimeText);
+                            // Thiết lập giá trị tối đa cho seekBar
+                            currentlyPlayingSongDialogLayoutBinding.seekBarDuration.setMax((int) totalDuration);
+                            // Cập nhật giá trị của SeekBar để hiển thị vị trí hiện tại của media
+                            currentlyPlayingSongDialogLayoutBinding.seekBarDuration.setProgress((int) currentPosition);
+                        }
+
+                        // Gửi thông điệp cập nhật sau mỗi khoảng thời gian nhất định (ví dụ: 1 giây)
+                        handler.postDelayed(this, 1000);
+                    }
                 }
-            }).addOnFailureListener(exception -> {
-                // Temporarily don't do anything --,--
-            });
-
-            // Update the UI for the currently playing song
-            if (i == 0) {
-                updateNowPlayingUI(song);
-            }
+            };
+            handler.post(updateSeekBarRunnable);
         }
+    }
+    private void play() {
+        player.play();
+        // Bắt đầu cập nhật seekBar và textViewDuration nếu media đang phát
+        if (player.isPlaying()) {
+            updateSeekBar();
+        }
+    }
+    private void stop() {
+        player.stop();
+        // Gỡ bỏ việc cập nhật seekBar và textViewDuration
+        handler.removeCallbacksAndMessages(null);
+        handler.removeCallbacks(updateSeekBarRunnable);
+    }
+    private void pause() {
+        player.pause();
+        // Gỡ bỏ việc cập nhật seekBar và textViewDuration
+        handler.removeCallbacks(updateSeekBarRunnable);
+    }
+    private void clearPlaylist(){
+        stop();
+        player.clearMediaItems();
+        player.release();
+        player = null; // Set player to null to ensure it will be reinitialized later
+        currentSongArrayList.clear();
+        setVisibleLayoutNowPlaying(false);
     }
     public void addToNextUp(Song item) {
         // Tạo đường dẫn tới tệp mp3
@@ -433,7 +819,7 @@ public class MainActivity extends AppCompatActivity {
     }
     public void addToNextUp(ArrayList<Song> songArrayList) {
         // Hiển thị layout Now Playing nếu chưa hiển thị
-        setVisibleLayoutlNowPlaying();
+        setVisibleLayoutNowPlaying(true);
         // Lấy vị trí hiện tại của bài hát đang phát
         int currentIndex = player.getCurrentMediaItemIndex();
 
@@ -462,11 +848,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void clearPlaylist(){
-        player.stop();
-        player.clearMediaItems();
-        player.release();
-    }
     private void hideToolbar(){
         activityMainBinding.toolbar.setVisibility(View.GONE);
     }

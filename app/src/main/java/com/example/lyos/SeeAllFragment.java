@@ -21,7 +21,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.LinearLayout;
 
-import com.bumptech.glide.Glide;
 import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.Models.Song;
@@ -29,8 +28,6 @@ import com.example.lyos.databinding.FragmentSeeAllBinding;
 import com.example.lyos.databinding.TracksOptionsBottomSheetDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 
@@ -105,13 +102,14 @@ public class SeeAllFragment extends Fragment {
         return fragmentSeeAllBinding.getRoot();
     }
 
-    private ArrayList<Song> arrayList = new ArrayList<>();
+    private ArrayList<Song> arrayList;
     SongRecycleViewAdapter adapter;
     Context context;
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         context = getContext();
+        arrayList = new ArrayList<>();
         if(!userID.isEmpty()){
             getUserTracksDataFromFirestore(userID);
         } else if (likeArrayList != null) {
@@ -206,9 +204,6 @@ public class SeeAllFragment extends Fragment {
         final Dialog dialog = new Dialog(context);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(dialogLayoutBinding.getRoot());
-        LinearLayout layoutPlayThisList = dialog.findViewById(R.id.layoutPlayThisList);
-        LinearLayout layoutAddToNextUp = dialog.findViewById(R.id.layoutAddToNextUp);
-        LinearLayout layoutAddToPlaylist = dialog.findViewById(R.id.layoutAddToPlaylist);
 
         dialogLayoutBinding.layoutPlayThisList.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -217,6 +212,7 @@ public class SeeAllFragment extends Fragment {
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
                     mainActivity.playNewPlaylist(arrayList);
+                    dialog.dismiss();
                 }
             }
         });
@@ -227,6 +223,7 @@ public class SeeAllFragment extends Fragment {
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
                     mainActivity.addToNextUp(arrayList);
+                    dialog.dismiss();
                 }
             }
         });

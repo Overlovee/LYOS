@@ -1,7 +1,6 @@
 package com.example.lyos.Models;
 
 import android.content.Context;
-
 import android.content.SharedPreferences;
 
 public class AccountUtils {
