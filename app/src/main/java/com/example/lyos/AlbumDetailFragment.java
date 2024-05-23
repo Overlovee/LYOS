@@ -103,8 +103,10 @@ public class AlbumDetailFragment extends Fragment {
         if(album != null){
             setUpUI();
             addEvents();
-            if(album.getSongList().size() > 0){
-                getDataFromFirestore();
+            if(album.getSongList() != null){
+                if(album.getSongList().size() > 0){
+                    getDataFromFirestore();
+                }
             }
         }
         else {
@@ -114,7 +116,16 @@ public class AlbumDetailFragment extends Fragment {
     private void setUpUI(){
         fragmentAlbumDetailBinding.textViewTitle.setText(album.getTitle());
         fragmentAlbumDetailBinding.textViewDescription.setText(album.getDescription());
-        fragmentAlbumDetailBinding.textViewTracks.setText("Album: " + String.valueOf(album.getSongList().size()) + " tracks");
+        if(album.getSongList() == null){
+            fragmentAlbumDetailBinding.textViewTracks.setText("Album: 0 tracks");
+            fragmentAlbumDetailBinding.buttonPlay.setEnabled(false);
+            fragmentAlbumDetailBinding.buttonPlayRandom.setEnabled(false);
+        }
+        else {
+            fragmentAlbumDetailBinding.textViewTracks.setText("Album: " + String.valueOf(album.getSongList().size()) + " tracks");
+            fragmentAlbumDetailBinding.buttonPlay.setEnabled(true);
+            fragmentAlbumDetailBinding.buttonPlayRandom.setEnabled(true);
+        }
 
         UserHandler userHandler = new UserHandler();
         userHandler.getInfoByID(album.getUserID()).addOnCompleteListener(new OnCompleteListener<UserInfo>() {
@@ -179,6 +190,26 @@ public class AlbumDetailFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 getActivity().getSupportFragmentManager().popBackStack();
+            }
+        });
+        fragmentAlbumDetailBinding.buttonPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Kiểm tra xem context có phải là instance của MainActivity hay không
+                if (context instanceof MainActivity) {
+                    MainActivity mainActivity = (MainActivity) context;
+                    mainActivity.playNewPlaylist(arrayList);
+                }
+            }
+        });
+        fragmentAlbumDetailBinding.buttonPlayRandom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Kiểm tra xem context có phải là instance của MainActivity hay không
+                if (context instanceof MainActivity) {
+                    MainActivity mainActivity = (MainActivity) context;
+                    mainActivity.playNewPlaylist(arrayList);
+                }
             }
         });
     }

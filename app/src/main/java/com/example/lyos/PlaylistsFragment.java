@@ -1,6 +1,9 @@
 package com.example.lyos;
 
+import android.app.Dialog;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -12,9 +15,11 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 
 import com.bumptech.glide.Glide;
 import com.example.lyos.CustomAdapters.PlaylistRecycleViewAdapter;
@@ -26,6 +31,8 @@ import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.databinding.FragmentPlaylistsBinding;
+import com.example.lyos.databinding.OtherSongOptionsBottomSheetDialogLayoutBinding;
+import com.example.lyos.databinding.PlaylistAddingDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.storage.FirebaseStorage;
@@ -147,32 +154,48 @@ public class PlaylistsFragment extends Fragment {
             }
         });
     }
-//    private void getUserTracksDataFromFirestore() {
-//        SongHandler handler = new SongHandler();
-//        handler.searchByUserID(user.getId(), 6).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
-//            @Override
-//            public void onComplete(@NonNull Task<ArrayList<Song>> task) {
-//                if (task.isSuccessful()) {
-//                    tracksArrayList = task.getResult();
-//                    if(!tracksArrayList.isEmpty()){
-//                        fragmentPlaylistsBinding.layoutTracks.setVisibility(View.VISIBLE);
-//                        trackAdapter = new SongRecycleViewAdapter(context, tracksArrayList);
-//                        fragmentPlaylistsBinding.recycleViewTrackItems.setAdapter(trackAdapter);
-//                        fragmentPlaylistsBinding.recycleViewTrackItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
-//                        RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(context);
-//                        fragmentPlaylistsBinding.recycleViewTrackItems.setLayoutManager(mLayoutManager);
-//                        fragmentPlaylistsBinding.recycleViewTrackItems.setItemAnimator(new DefaultItemAnimator());
-//                    } else {
-//                        fragmentPlaylistsBinding.layoutTracks.setVisibility(View.GONE);
-//                    }
-//                } else {
-//                    //and more action --.--
-//                    fragmentPlaylistsBinding.layoutTracks.setVisibility(View.GONE);
-//                }
-//            }
-//        });
-//    }
     private void addEvents(){
+        fragmentPlaylistsBinding.layoutCreateNew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showPlaylistAddingDialog();
+            }
+        });
+    }
+    private void showPlaylistAddingDialog() {
+        PlaylistAddingDialogLayoutBinding dialogLayoutBinding;
+        LayoutInflater inflater = LayoutInflater.from(context);
+        dialogLayoutBinding = PlaylistAddingDialogLayoutBinding.inflate(inflater);
 
+        final Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(dialogLayoutBinding.getRoot());
+
+        dialogLayoutBinding.textViewAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String title = dialogLayoutBinding.editTextTitle.getText().toString();
+                if(!title.isEmpty()){
+                    Playlist newPlaylist = new Playlist();
+                    newPlaylist.setTitle(title);
+                    newPlaylist.setUserID(user.getId());
+                    PlaylistHandler playlistHandler = new PlaylistHandler();
+                    playlistHandler.add(newPlaylist);
+                }
+                dialog.dismiss();
+            }
+        });
+        dialogLayoutBinding.textViewCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
+        dialog.getWindow().setGravity(Gravity.BOTTOM);
     }
 }

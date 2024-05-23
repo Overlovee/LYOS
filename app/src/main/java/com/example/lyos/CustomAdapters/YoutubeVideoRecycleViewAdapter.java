@@ -1,11 +1,13 @@
 package com.example.lyos.CustomAdapters;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,14 +17,21 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.lyos.MainActivity;
+import com.example.lyos.Models.Song;
 import com.example.lyos.Models.YoutubeVideo;
 import com.example.lyos.R;
 import com.example.lyos.databinding.YoutubeOptionsBottomSheetDialogLayoutBinding;
 
 import java.util.ArrayList;
+
+import at.huber.youtubeExtractor.VideoMeta;
+import at.huber.youtubeExtractor.YouTubeExtractor;
+import at.huber.youtubeExtractor.YtFile;
 
 public class YoutubeVideoRecycleViewAdapter extends RecyclerView.Adapter<YoutubeVideoRecycleViewAdapter.MyViewHolder>{
     private Context context;
@@ -82,13 +91,23 @@ public class YoutubeVideoRecycleViewAdapter extends RecyclerView.Adapter<Youtube
 
         dialogLayoutBinding.textViewTitle.setText(item.getTitle());
         dialogLayoutBinding.textViewUserName.setText(item.getChannelTitle());
-
         dialogLayoutBinding.layoutAddToNextUp.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("StaticFieldLeak")
             @Override
             public void onClick(View v) {
-
+                if (context instanceof MainActivity) {
+                    Song song = new Song();
+                    song.setTitle(item.getTitle());
+                    song.setMp3FileName(item.getVideoId());
+                    song.setUserID(item.getChannelTitle());
+                    song.setDescription(item.getDescription());
+                    song.setUploadDate(item.getPublishedAt());
+                    song.setImageFileName(item.getImageUrl());
+                    song.setType("youtube");
+                    MainActivity mainActivity = (MainActivity) context;
+                    mainActivity.addToNextUp(song);
+                }
                 dialog.dismiss();
-
             }
         });
         dialogLayoutBinding.layoutGoToYoutube.setOnClickListener(new View.OnClickListener() {

@@ -3,10 +3,12 @@ package com.example.lyos.FirebaseHandlers;
 import androidx.annotation.NonNull;
 
 import com.example.lyos.Models.Playlist;
+import com.example.lyos.Models.Song;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -46,7 +48,7 @@ public class PlaylistHandler {
     }
 
     public void add(Playlist item) {
-
+        item.setNormalizedTitle(normalizeString(item.getTitle()));
         collection.add(item)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
@@ -139,12 +141,33 @@ public class PlaylistHandler {
     }
 
 
-    public void update(String id, Playlist item) {
-        collection.document(id)
-                .set(item);
+    public Task<Void> update(String id, Playlist item) {
+        return collection.document(id)
+                .set(item)
+                .continueWithTask(new Continuation<Void, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<Void> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            return Tasks.forResult(null); // Thành công, trả về Task<Void> trống
+                        } else {
+                            throw task.getException(); // Thất bại, ném ra ngoại lệ
+                        }
+                    }
+                });
     }
-    public void delete(String id) {
-        collection.document(id)
-                .delete();
+
+    public Task<Void> delete(String id) {
+        return collection.document(id)
+                .delete()
+                .continueWithTask(new Continuation<Void, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<Void> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            return Tasks.forResult(null); // Thành công, trả về Task<Void> trống
+                        } else {
+                            throw task.getException(); // Thất bại, ném ra ngoại lệ
+                        }
+                    }
+                });
     }
 }

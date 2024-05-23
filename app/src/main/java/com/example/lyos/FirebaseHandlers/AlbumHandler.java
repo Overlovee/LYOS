@@ -3,10 +3,12 @@ package com.example.lyos.FirebaseHandlers;
 import androidx.annotation.NonNull;
 
 import com.example.lyos.Models.Album;
+import com.example.lyos.Models.Playlist;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -138,12 +140,33 @@ public class AlbumHandler {
     }
 
 
-    public void update(String id, Album item) {
-        collection.document(id)
-                .set(item);
+    public Task<Void> update(String id, Album item) {
+        return collection.document(id)
+                .set(item)
+                .continueWithTask(new Continuation<Void, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<Void> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            return Tasks.forResult(null);
+                        } else {
+                            throw task.getException();
+                        }
+                    }
+                });
     }
-    public void delete(String id) {
-        collection.document(id)
-                .delete();
+
+    public Task<Void> delete(String id) {
+        return collection.document(id)
+                .delete()
+                .continueWithTask(new Continuation<Void, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<Void> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            return Tasks.forResult(null);
+                        } else {
+                            throw task.getException();
+                        }
+                    }
+                });
     }
 }

@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
@@ -23,6 +25,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -60,6 +63,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+
+import at.huber.youtubeExtractor.VideoMeta;
+import at.huber.youtubeExtractor.YouTubeExtractor;
+import at.huber.youtubeExtractor.YtFile;
 
 public class MainActivity extends AppCompatActivity {
     private static final String ACCOUNT_TYPE = "com.example.lyos.account";
@@ -501,34 +508,98 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    @SuppressLint("StaticFieldLeak")
     public void setAudioNowPlaying(Song item) {
-        // Hiển thị layout Now Playing nếu chưa hiển thị
-        setVisibleLayoutNowPlaying(true);
         // Thêm bài hát vào danh sách hiện tại
-        currentSongArrayList.add(item);
-        // Tạo đường dẫn tới tệp mp3
-        String mp3Path = "mp3s/" + item.getMp3FileName();
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(mp3Path);
+        if(currentSongArrayList == null){
+            currentSongArrayList = new ArrayList<>();
+            currentSongArrayList.add(item);
+        }
+        else {
+            currentSongArrayList.add(item);
+        }
 
-        // Lấy URL của tệp mp3 và thêm vào danh sách phát của player
-        storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-            /// Tạo MediaItem từ URL
-            MediaItem mediaItem = MediaItem.fromUri(uri);
-            // Thêm MediaItem vào player
-            player.addMediaItem(mediaItem);
-            // Chuẩn bị player và phát ngay bài hát vừa thêm vào
-            player.setRepeatMode(Player.REPEAT_MODE_ALL);
-            player.prepare();
-            player.seekTo(0, C.TIME_UNSET); // Nhảy đến bài hát mới nhất
-            play();
+        if(item.getType().equals("system")){
+            // Tạo đường dẫn tới tệp mp3
+            String mp3Path = "mp3s/" + item.getMp3FileName();
+            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(mp3Path);
 
-            // Cập nhật UI với thông tin bài hát hiện tại
-            updateNowPlayingUI(item);
-        }).addOnFailureListener(exception -> {
-            // Xử lý lỗi tải URL
-            Toast.makeText(MainActivity.this, "Error: Cannot load mp3!", Toast.LENGTH_LONG).show();
-        });
+            // Lấy URL của tệp mp3 và thêm vào danh sách phát của player
+            storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                /// Tạo MediaItem từ URL
+                MediaItem mediaItem = MediaItem.fromUri(uri);
+                // Thêm MediaItem vào player
+                player.addMediaItem(mediaItem);
+                // Chuẩn bị player và phát ngay bài hát vừa thêm vào
+                player.setRepeatMode(Player.REPEAT_MODE_ALL);
+                player.prepare();
+                player.seekTo(0, C.TIME_UNSET); // Nhảy đến bài hát mới nhất
+                // Hiển thị layout Now Playing nếu chưa hiển thị
+                setVisibleLayoutNowPlaying(true);
+                play();
+
+                // Cập nhật UI với thông tin bài hát hiện tại
+                updateNowPlayingUI(item);
+            }).addOnFailureListener(exception -> {
+                // Xử lý lỗi tải URL
+                Toast.makeText(MainActivity.this, "Error: Cannot load mp3!", Toast.LENGTH_LONG).show();
+            });
+        }
+        else if(item.getType().equals("youtube")){
+            String youtubeLink = "http://youtube.com/watch?v=" + item.getMp3FileName(); // Assuming song.getMp3FileName() returns the video ID
+            new YouTubeExtractor(MainActivity.this) {
+                @SuppressLint("StaticFieldLeak")
+                @Override
+                public void onExtractionComplete(SparseArray<YtFile> ytFiles, VideoMeta vMeta) {
+                    if (ytFiles == null) {
+                        Log.e("YouTubeExtractor", "ytFiles is null. Video ID: " + item.getMp3FileName());
+                        Toast.makeText(MainActivity.this, "Error: Cannot extract mp3!", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    if (ytFiles.size() == 0) {
+                        Log.e("YouTubeExtractor", "ytFiles is empty. Video ID: " + item.getMp3FileName());
+                        Toast.makeText(MainActivity.this, "Error: Cannot extract mp3!", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    for (int i = 0; i < ytFiles.size(); i++) {
+                        int key = ytFiles.keyAt(i);
+                        YtFile ytFile = ytFiles.get(key);
+                        Log.d("YouTubeExtractor", "Format: " + ytFile.getFormat().getHeight() + " URL: " + ytFile.getUrl());
+
+                        if (ytFile.getFormat().getHeight() == -1 || ytFile.getFormat().getHeight() >= 360) {
+                            String downloadUrl = ytFile.getUrl();
+                            // Tạo MediaItem từ URL
+                            MediaItem mediaItem = MediaItem.fromUri(downloadUrl);
+                            // Thêm MediaItem vào player
+                            player.addMediaItem(mediaItem);
+                            // Chuẩn bị player và phát ngay bài hát vừa thêm vào
+                            player.setRepeatMode(Player.REPEAT_MODE_ALL);
+                            player.prepare();
+                            player.seekTo(0, C.TIME_UNSET); // Nhảy đến bài hát mới nhất
+                            // Hiển thị layout Now Playing nếu chưa hiển thị
+                            setVisibleLayoutNowPlaying(true);
+                            play();
+
+                            // Cập nhật UI với thông tin bài hát hiện tại
+                            updateNowPlayingUI(item);
+                            break;
+                        }
+                    }
+                }
+
+                @Override
+                protected void onCancelled() {
+                    super.onCancelled();
+                    Toast.makeText(MainActivity.this, "Error: Extraction was cancelled!", Toast.LENGTH_LONG).show();
+                }
+            }.extract(youtubeLink, false, false);
+
+        }
     }
+    @SuppressLint("StaticFieldLeak")
     public void playNewPlaylist(ArrayList<Song> songArrayList) {
         // Kiểm tra nếu songArrayList là null hoặc trống
         if (songArrayList == null || songArrayList.isEmpty()) {
@@ -559,10 +630,34 @@ public class MainActivity extends AppCompatActivity {
 
         // Iterate through the song list and create download tasks for each song
         for (Song song : songArrayList) {
-            String mp3Path = "mp3s/" + song.getMp3FileName();
-            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(mp3Path);
-            Task<Uri> downloadTask = storageRef.getDownloadUrl();
-            downloadTasks.add(downloadTask);
+            if(song.getType().equals("system")){
+                String mp3Path = "mp3s/" + song.getMp3FileName();
+                StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(mp3Path);
+                Task<Uri> downloadTask = storageRef.getDownloadUrl();
+                downloadTasks.add(downloadTask);
+            }
+            else if (song.getType().equals("youtube")) {
+                String youtubeLink = "http://youtube.com/watch?v=" + song.getMp3FileName(); // Assuming song.getMp3FileName() returns the video ID
+                new YouTubeExtractor(MainActivity.this) {
+                    @SuppressLint("StaticFieldLeak")
+                    @Override
+                    public void onExtractionComplete(SparseArray<YtFile> ytFiles, VideoMeta vMeta) {
+                        if (ytFiles != null) {
+                            for (int i = 0; i < ytFiles.size(); i++) {
+                                int key = ytFiles.keyAt(i);
+                                YtFile ytFile = ytFiles.get(key);
+                                if (ytFile.getFormat().getHeight() == -1 || ytFile.getFormat().getHeight() >= 360) {
+                                    String downloadUrl = ytFile.getUrl();
+                                    // Create a MediaItem from the download URL
+                                    MediaItem mediaItem = MediaItem.fromUri(downloadUrl);
+                                    mediaItems.add(mediaItem);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }.extract(youtubeLink, false, false);
+            }
         }
 
         // Wait for all download tasks to complete
@@ -604,55 +699,77 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     private void updateNowPlayingUI(Song song) {
-        // Cập nhật hình ảnh bài hát
-        String imagePath = "images/" + song.getImageFileName();
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
-        storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-            Glide.with(MainActivity.this).load(uri).into(activityMainBinding.imageViewNowPlaying);
-            if(currentlyPlayingSongDialogLayoutBinding != null){
-                Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewSong);
-                Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewBackGround);
+        if(song.getType().equals("system")){
+            if(currentlyPlayingSongDialogLayoutBinding != null) {
+                currentlyPlayingSongDialogLayoutBinding.buttonLike.setEnabled(false);
             }
-        }).addOnFailureListener(exception -> {
-            // Handle any errors
-        });
+            // Cập nhật hình ảnh bài hát
+            String imagePath = "images/" + song.getImageFileName();
+            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
+            storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                Glide.with(MainActivity.this).load(uri).into(activityMainBinding.imageViewNowPlaying);
+                if(currentlyPlayingSongDialogLayoutBinding != null){
+                    Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewSong);
+                    Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewBackGround);
+                }
+            }).addOnFailureListener(exception -> {
+                // Handle any errors
+            });
 
-        // Cập nhật tiêu đề bài hát
-        activityMainBinding.textViewTitle.setText(song.getTitle());
-        // Cập nhật tên người dùng
-        UserHandler userHandler = new UserHandler();
-        userHandler.getInfoByID(song.getUserID()).addOnCompleteListener(new OnCompleteListener<UserInfo>() {
-            @Override
-            public void onComplete(@NonNull Task<UserInfo> task) {
-                if (task.isSuccessful()) {
-                    currentUserInfo = task.getResult();
-                    if (currentUserInfo != null) {
-                        activityMainBinding.textViewUserName.setText(currentUserInfo.getUsername());
-                        if(currentlyPlayingSongDialogLayoutBinding != null){
-                            currentlyPlayingSongDialogLayoutBinding.textViewTitle.setText(song.getTitle());
-                            currentlyPlayingSongDialogLayoutBinding.textViewUserName.setText(currentUserInfo.getUsername());
-                            currentlyPlayingSongDialogLayoutBinding.textViewDescription.setText(song.getDescription());
-                            if(song.getLikedBy() != null){
-                                if(song.getLikedBy().contains(user.getId())){
-                                    currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.hearted);
-                                }
-                                else {
+            // Cập nhật tiêu đề bài hát
+            activityMainBinding.textViewTitle.setText(song.getTitle());
+            // Cập nhật tên người dùng
+            UserHandler userHandler = new UserHandler();
+            userHandler.getInfoByID(song.getUserID()).addOnCompleteListener(new OnCompleteListener<UserInfo>() {
+                @Override
+                public void onComplete(@NonNull Task<UserInfo> task) {
+                    if (task.isSuccessful()) {
+                        currentUserInfo = task.getResult();
+                        if (currentUserInfo != null) {
+                            activityMainBinding.textViewUserName.setText(currentUserInfo.getUsername());
+                            if(currentlyPlayingSongDialogLayoutBinding != null){
+                                currentlyPlayingSongDialogLayoutBinding.textViewTitle.setText(song.getTitle());
+                                currentlyPlayingSongDialogLayoutBinding.textViewUserName.setText(currentUserInfo.getUsername());
+                                currentlyPlayingSongDialogLayoutBinding.textViewDescription.setText(song.getDescription());
+                                if(song.getLikedBy() != null){
+                                    if(song.getLikedBy().contains(user.getId())){
+                                        currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.hearted);
+                                    }
+                                    else {
+                                        currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.heart);
+                                    }
+                                } else {
                                     currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.heart);
                                 }
-                            } else {
-                                currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.heart);
+                                pause();
+                                play();
                             }
-                            pause();
-                            play();
+                        } else {
+                            activityMainBinding.textViewUserName.setText("Unknown");
                         }
                     } else {
-                        activityMainBinding.textViewUserName.setText("Unknown");
+                        // Handle any errors
                     }
-                } else {
-                    // Handle any errors
                 }
+            });
+        }
+        else if(song.getType().equals("youtube")){
+            if(currentlyPlayingSongDialogLayoutBinding != null) {
+                currentlyPlayingSongDialogLayoutBinding.buttonLike.setEnabled(true);
             }
-        });
+            Glide.with(MainActivity.this).load(song.getImageFileName()).into(activityMainBinding.imageViewNowPlaying);
+            if(currentlyPlayingSongDialogLayoutBinding != null){
+                Glide.with(MainActivity.this).load(song.getImageFileName()).into(currentlyPlayingSongDialogLayoutBinding.imageViewSong);
+                Glide.with(MainActivity.this).load(song.getImageFileName()).into(currentlyPlayingSongDialogLayoutBinding.imageViewBackGround);
+            }
+            activityMainBinding.textViewTitle.setText(song.getTitle());
+            activityMainBinding.textViewUserName.setText(song.getUserID());
+            currentlyPlayingSongDialogLayoutBinding.textViewTitle.setText(song.getTitle());
+            currentlyPlayingSongDialogLayoutBinding.textViewUserName.setText(currentUserInfo.getUsername());
+            currentlyPlayingSongDialogLayoutBinding.textViewDescription.setText(song.getDescription());
+            pause();
+            play();
+        }
     }
     private void updateRepeatButtonUI(int repeatMode){
         if (currentlyPlayingSongDialogLayoutBinding != null) {
@@ -790,32 +907,87 @@ public class MainActivity extends AppCompatActivity {
         currentSongArrayList.clear();
         setVisibleLayoutNowPlaying(false);
     }
+    @SuppressLint("StaticFieldLeak")
     public void addToNextUp(Song item) {
-        // Tạo đường dẫn tới tệp mp3
-        String mp3Path = "mp3s/" + item.getMp3FileName();
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(mp3Path);
+        if (player == null) {
+            setAudioNowPlaying(item);
+            return;
+        }
+        else {
+            if (player.getMediaItemCount() == 0) {
+                setAudioNowPlaying(item);
+                return;
+            }
+        }
 
-        // Lấy URL của tệp mp3 và thêm vào danh sách phát của player
-        storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-            // Tạo MediaItem từ URL
-            MediaItem mediaItem = MediaItem.fromUri(uri);
+        if(item.getType().equals("system")){
+            // Tạo đường dẫn tới tệp mp3
+            String mp3Path = "mp3s/" + item.getMp3FileName();
+            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(mp3Path);
 
-            // Lấy vị trí hiện tại của bài hát đang phát
-            int currentIndex = player.getCurrentMediaItemIndex();
+            // Lấy URL của tệp mp3 và thêm vào danh sách phát của player
+            storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                // Tạo MediaItem từ URL
+                MediaItem mediaItem = MediaItem.fromUri(uri);
 
-            // Thêm MediaItem vào vị trí tiếp theo trong danh sách phát
-            player.addMediaItem(currentIndex + 1, mediaItem);
+                // Lấy vị trí hiện tại của bài hát đang phát
+                int currentIndex = player.getCurrentMediaItemIndex();
 
-            // Cập nhật danh sách bài hát hiện tại
-            currentSongArrayList.add(currentIndex + 1, item);
+                // Thêm MediaItem vào vị trí tiếp theo trong danh sách phát
+                player.addMediaItem(currentIndex + 1, mediaItem);
 
-            // Hiển thị thông báo thành công
-            Toast.makeText(MainActivity.this, "Added to next up!", Toast.LENGTH_SHORT).show();
+                // Cập nhật danh sách bài hát hiện tại
+                currentSongArrayList.add(currentIndex + 1, item);
 
-        }).addOnFailureListener(exception -> {
-            // Xử lý lỗi tải URL
-            Toast.makeText(MainActivity.this, "Error: Cannot load mp3!", Toast.LENGTH_LONG).show();
-        });
+
+                // Hiển thị thông báo thành công
+                Toast.makeText(MainActivity.this, "Added to next up!", Toast.LENGTH_SHORT).show();
+
+            }).addOnFailureListener(exception -> {
+                // Xử lý lỗi tải URL
+                Toast.makeText(MainActivity.this, "Error: Cannot load mp3!", Toast.LENGTH_LONG).show();
+            });
+        }
+        else if(item.getType().equals("youtube")){
+
+            String youtubeLink = "http://youtube.com/watch?v=" + item.getMp3FileName(); // Assuming song.getMp3FileName() returns the video ID
+            new YouTubeExtractor(MainActivity.this) {
+                @SuppressLint("StaticFieldLeak")
+                @Override
+                public void onExtractionComplete(SparseArray<YtFile> ytFiles, VideoMeta vMeta) {
+                    if (ytFiles != null) {
+                        for (int i = 0; i < ytFiles.size(); i++) {
+                            int key = ytFiles.keyAt(i);
+                            YtFile ytFile = ytFiles.get(key);
+                            if (ytFile.getFormat().getHeight() == -1 || ytFile.getFormat().getHeight() >= 360) {
+                                String downloadUrl = ytFile.getUrl();
+                                // Tạo MediaItem từ URL
+                                MediaItem mediaItem = MediaItem.fromUri(downloadUrl);
+
+                                // Lấy vị trí hiện tại của bài hát đang phát
+                                int currentIndex = player.getCurrentMediaItemIndex();
+
+                                // Thêm MediaItem vào vị trí tiếp theo trong danh sách phát
+                                player.addMediaItem(currentIndex + 1, mediaItem);
+
+                                // Cập nhật danh sách bài hát hiện tại
+                                currentSongArrayList.add(currentIndex + 1, item);
+
+                                // Hiển thị thông báo thành công
+                                Toast.makeText(MainActivity.this, "Added to next up!", Toast.LENGTH_SHORT).show();
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                protected void onCancelled() {
+                    super.onCancelled();
+                    Toast.makeText(MainActivity.this, "Error: Cannot load mp3!", Toast.LENGTH_LONG).show();
+                }
+            }.extract(youtubeLink, false, false);
+        }
     }
     public void addToNextUp(ArrayList<Song> songArrayList) {
         // Hiển thị layout Now Playing nếu chưa hiển thị

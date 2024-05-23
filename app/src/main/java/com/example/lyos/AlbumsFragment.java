@@ -1,6 +1,14 @@
 package com.example.lyos;
 
+import android.app.Dialog;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -12,24 +20,39 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Environment;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.webkit.MimeTypeMap;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.example.lyos.CustomAdapters.AlbumRecycleViewAdapter;
 import com.example.lyos.CustomAdapters.PlaylistRecycleViewAdapter;
 import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.AlbumHandler;
 import com.example.lyos.FirebaseHandlers.PlaylistHandler;
+import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.Models.Album;
 import com.example.lyos.Models.Playlist;
 import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
+import com.example.lyos.databinding.AlbumAddingDialogLayoutBinding;
 import com.example.lyos.databinding.FragmentAlbumsBinding;
+import com.example.lyos.databinding.PlaylistAddingDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -104,10 +127,9 @@ public class AlbumsFragment extends Fragment {
             public void onProfileDataLoaded(UserInfo u) {
                 user = u;
                 if (user != null){
-                    //getUserTracksDataFromFirestore();
                     getAlbumsDataFromFirestore();
-
                     addEvents();
+
                 }
                 else {
                     getActivity().getSupportFragmentManager().popBackStack();
@@ -170,6 +192,129 @@ public class AlbumsFragment extends Fragment {
 //        });
 //    }
     private void addEvents(){
+        fragmentAlbumsBinding.layoutCreateNew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showPlaylistAddingDialog();
+            }
+        });
+    }
+    private AlbumAddingDialogLayoutBinding dialogAlbumAddindBinding;
+    private void showPlaylistAddingDialog() {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        dialogAlbumAddindBinding = AlbumAddingDialogLayoutBinding.inflate(inflater);
 
+        final Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(dialogAlbumAddindBinding.getRoot());
+
+        dialogAlbumAddindBinding.imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chooseImage();
+            }
+        });
+        dialogAlbumAddindBinding.textViewAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String title = dialogAlbumAddindBinding.editTextTitle.getText().toString();
+                String description = dialogAlbumAddindBinding.editTextDescription.getText().toString();
+                if(!title.isEmpty()
+                    && selectedImageUri != null
+                ){
+                    Album newAlbum = new Album();
+                    newAlbum.setTitle(title);
+                    newAlbum.setDescription(description);
+                    newAlbum.setUserID(user.getId());
+                    uploadNewAlbum(newAlbum);
+                    dialog.dismiss();
+                }
+                else {
+                    Toast.makeText(context, "Please type all fields", Toast.LENGTH_LONG);
+                }
+            }
+        });
+        dialogAlbumAddindBinding.textViewCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
+        dialog.getWindow().setGravity(Gravity.BOTTOM);
+    }
+    private void uploadNewAlbum(Album item){
+        // Nếu có URI của hình ảnh đã chọn
+        if (selectedImageUri != null) {
+            // Lấy phần mở rộng của file từ URI của hình ảnh được chọn
+            String fileExtension = getFileExtension(selectedImageUri);
+            if (fileExtension == null) {
+                Toast.makeText(context, "Unsupported file type", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Tạo tên mới cho hình ảnh
+            String imageFileName = user.getId() + System.currentTimeMillis() + "." + fileExtension;
+            // Tạo reference đến nơi lưu trữ trên Firebase Storage cho hình ảnh
+            StorageReference imageStorageRef = FirebaseStorage.getInstance().getReference().child("album_images").child(imageFileName);
+
+            // Upload hình ảnh lên Firebase Storage
+            imageStorageRef.putFile(selectedImageUri)
+                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            item.setImageFileName(imageFileName);
+                            // Thêm mục Song vào Firebase Database bằng cách sử dụng SongHandler
+                            AlbumHandler albumHandler = new AlbumHandler();
+                            albumHandler.add(item);
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            // Upload hình ảnh thất bại
+                            Toast.makeText(context, "Failed to upload image", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } else {
+            // Nếu không có hình ảnh được chọn
+            Toast.makeText(context, "No image selected", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private String getFileExtension(Uri uri) {
+        ContentResolver contentResolver = context.getContentResolver();
+        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+        return mimeTypeMap.getExtensionFromMimeType(contentResolver.getType(uri));
+    }
+    private static final int REQUEST_IMAGE_PICK = 1;
+    private Uri selectedImageUri;
+    private void chooseImage(){
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+
+        // Kiểm tra xem thiết bị có ứng dụng để xử lý Intent này không
+        if (intent.resolveActivity(context.getPackageManager()) != null) {
+            startActivityForResult(Intent.createChooser(intent, "Select image"), REQUEST_IMAGE_PICK);
+        } else {
+            // Nếu không có ứng dụng nào để xử lý Intent, thông báo cho người dùng
+            Toast.makeText(context, "No application support", Toast.LENGTH_SHORT).show();
+        }
+    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_IMAGE_PICK && resultCode == getActivity().RESULT_OK && data != null) {
+            selectedImageUri = data.getData();
+            if(selectedImageUri != null
+                && dialogAlbumAddindBinding != null
+            ){
+                Glide.with(context).load(selectedImageUri).into(dialogAlbumAddindBinding.imageView);
+            }
+        }
     }
 }

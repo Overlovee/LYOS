@@ -11,18 +11,27 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.lyos.FirebaseHandlers.AlbumHandler;
+import com.example.lyos.FirebaseHandlers.PlaylistHandler;
 import com.example.lyos.FirebaseHandlers.UserHandler;
 import com.example.lyos.MainActivity;
 import com.example.lyos.Models.Album;
+import com.example.lyos.Models.Playlist;
+import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.R;
+import com.example.lyos.databinding.ConfirmDialogLayoutBinding;
 import com.example.lyos.databinding.OtherSongOptionsBottomSheetDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -61,11 +70,47 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
     }
 
     private UserInfo currentUserInfo = new UserInfo();
+    private UserInfo user;
+    FragmentActivity fragmentActivity;
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
         Album item = list.get(position);
+
+        if (context instanceof FragmentActivity) {
+            fragmentActivity = (FragmentActivity) context;
+        }
+        // Kiểm tra xem có dữ liệu tài khoản đã được lưu trữ hay không
+        ProfileDataLoader.loadProfileData(context, new ProfileDataLoader.OnProfileDataLoadedListener() {
+            @Override
+            public void onProfileDataLoaded(UserInfo u) {
+                user = u;
+                if (user != null){
+                    holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                        @Override
+                        public boolean onLongClick(View v) {
+                            showDeleteDialog(holder, item);
+                            return false;
+                        }
+                    });
+                } else {
+                    fragmentActivity.getSupportFragmentManager().popBackStack();
+                }
+            }
+            @Override
+            public void onProfileDataLoadFailed() {
+                fragmentActivity.getSupportFragmentManager().popBackStack();
+            }
+        });
+
+
         holder.textViewTitle.setText(item.getTitle());
-        holder.textViewTracks.setText("Album: " + String.valueOf(item.getSongList().size()) + " tracks");
+
+        if(item.getSongList() == null){
+            holder.textViewTracks.setText("Album: 0 tracks");
+        }
+        else {
+            holder.textViewTracks.setText("Album: " + String.valueOf(item.getSongList().size()) + " tracks");
+        }
         UserHandler userHandler = new UserHandler();
         userHandler.getInfoByID(item.getUserID()).addOnCompleteListener(new OnCompleteListener<UserInfo>() {
             @Override
@@ -91,6 +136,7 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
             Glide.with(context).load(uri).into(holder.imageViewItem);
         }).addOnFailureListener(exception -> {
             // Handle any errors
+            holder.imageViewItem.setImageResource(R.drawable.lyos);
         });
         holder.imageViewMoreOptionsAction.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -128,11 +174,6 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
         });
         dialogLayoutBinding.textViewTitle.setText(item.getTitle());
         dialogLayoutBinding.textViewUserName.setText(currentUserInfo.getUsername());
-//        LinearLayout layoutLike = dialog.findViewById(R.id.layoutLike);
-//        LinearLayout layoutAddToNextUp = dialog.findViewById(R.id.layoutAddToNextUp);
-//        LinearLayout layoutAddToPlaylist = dialog.findViewById(R.id.layoutAddToPlaylist);
-//        LinearLayout layoutGoToUserProfile = dialog.findViewById(R.id.layoutGoToUserProfile);
-//        LinearLayout layoutViewComment = dialog.findViewById(R.id.layoutViewComment);
 
         dialogLayoutBinding.layoutLike.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -148,6 +189,63 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         dialog.getWindow().setGravity(Gravity.BOTTOM);
+    }
+    private void showDeleteDialog(AlbumRecycleViewAdapter.MyViewHolder holder, Album item) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        ConfirmDialogLayoutBinding dialogLayoutBinding = ConfirmDialogLayoutBinding.inflate(inflater);
+
+        final Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(dialogLayoutBinding.getRoot());
+
+        AlbumHandler albumHandler = new AlbumHandler();
+        dialogLayoutBinding.layoutYes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                albumHandler.delete(item.getId())
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Toast.makeText(context, "Delete successfully!", Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                                holder.itemView.setVisibility(View.GONE);
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(context, "Can not delete!", Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            }
+                        });
+            }
+        });
+
+        dialogLayoutBinding.layoutNo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+
+            }
+        });
+        dialogLayoutBinding.buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialogLayoutBinding.buttonClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
+        dialog.getWindow().setGravity(Gravity.BOTTOM);
+
     }
     @Override
     public int getItemCount() {

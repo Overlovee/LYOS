@@ -16,6 +16,7 @@ public class Song {
     private Date uploadDate;
     private String userID;
     private String normalizedTitle;
+    private String type;
 
     public Song() {
         // Khởi tạo giá trị mặc định
@@ -31,9 +32,13 @@ public class Song {
         this.uploadDate = new Date();
         this.userID = "";
         this.normalizedTitle = "";
+        this.type = "";
     }
 
-    public Song(String title, String mp3FileName, String imageFileName, String description, int duration, ArrayList<String> likedBy, int listens, String tag, Date uploadDate, String userID) {
+    public Song(String title, String mp3FileName, String imageFileName, String description,
+                int duration, ArrayList<String> likedBy,
+                int listens, String tag, Date uploadDate, String userID,
+                String type) {
         this.id = "";
         this.title = title;
         this.mp3FileName = mp3FileName;
@@ -46,6 +51,7 @@ public class Song {
         this.uploadDate = uploadDate;
         this.userID = userID;
         this.normalizedTitle = normalizeTitle(title);
+        this.type = type;
     }
 
     public String getId() {
@@ -144,6 +150,14 @@ public class Song {
 
     public void setUserID(String userID) {
         this.userID = userID;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getNormalizedTitle() {
