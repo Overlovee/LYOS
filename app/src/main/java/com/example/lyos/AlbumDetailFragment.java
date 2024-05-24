@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -20,6 +21,7 @@ import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.FirebaseHandlers.UserHandler;
 import com.example.lyos.Models.Album;
+import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.databinding.FragmentAlbumDetailBinding;
@@ -92,6 +94,7 @@ public class AlbumDetailFragment extends Fragment {
         return fragmentAlbumDetailBinding.getRoot();
     }
 
+    private UserInfo user;
     private UserInfo currentUserInfo = new UserInfo();
     private ArrayList<Song> arrayList = new ArrayList<>();
     SongRecycleViewAdapter adapter;
@@ -100,6 +103,18 @@ public class AlbumDetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         context = getContext();
+        // Kiểm tra xem có dữ liệu tài khoản đã được lưu trữ hay không
+        ProfileDataLoader.loadProfileData(requireContext(), new ProfileDataLoader.OnProfileDataLoadedListener() {
+            @Override
+            public void onProfileDataLoaded(UserInfo u) {
+                user = u;
+            }
+
+            @Override
+            public void onProfileDataLoadFailed() {
+
+            }
+        });
         if(album != null){
             setUpUI();
             addEvents();
@@ -114,6 +129,7 @@ public class AlbumDetailFragment extends Fragment {
         }
     }
     private void setUpUI(){
+
         fragmentAlbumDetailBinding.textViewTitle.setText(album.getTitle());
         fragmentAlbumDetailBinding.textViewDescription.setText(album.getDescription());
         if(album.getSongList() == null){
@@ -134,6 +150,13 @@ public class AlbumDetailFragment extends Fragment {
                 if (task.isSuccessful()) {
                     currentUserInfo = task.getResult();
                     if (currentUserInfo != null) {
+                        if(currentUserInfo.getId().equals(user.getId())){
+                            fragmentAlbumDetailBinding.textViewFollowAction.setVisibility(View.GONE);
+                        }
+                        else {
+                            fragmentAlbumDetailBinding.textViewFollowAction.setVisibility(View.VISIBLE);
+                        }
+
                         fragmentAlbumDetailBinding.textViewUserName.setText(currentUserInfo.getUsername());
                         // Load image using Glide library
                         // For User
@@ -209,6 +232,31 @@ public class AlbumDetailFragment extends Fragment {
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
                     mainActivity.playNewPlaylist(arrayList);
+                }
+            }
+        });
+        fragmentAlbumDetailBinding.textViewFollowAction.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UserHandler userHandler = new UserHandler();
+                if (fragmentAlbumDetailBinding.textViewFollowAction.getText().equals("Follow")) {
+                    if(currentUserInfo.getFollowers() == null){
+                        currentUserInfo.setFollowers(new ArrayList<>());
+                    }
+                    currentUserInfo.getFollowers().add(user.getId());
+                    userHandler.update(currentUserInfo.getId(), currentUserInfo);
+                    fragmentAlbumDetailBinding.textViewFollowAction.setText("Following");
+                    fragmentAlbumDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
+                    fragmentAlbumDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
+                } else {
+                    if(currentUserInfo.getFollowers() == null){
+                        currentUserInfo.setFollowers(new ArrayList<>());
+                    }
+                    currentUserInfo.getFollowers().remove(user.getId());
+                    userHandler.update(currentUserInfo.getId(), currentUserInfo);
+                    fragmentAlbumDetailBinding.textViewFollowAction.setText("Follow");
+                    fragmentAlbumDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
+                    fragmentAlbumDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
                 }
             }
         });

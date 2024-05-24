@@ -9,10 +9,13 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.MainActivity;
+import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.R;
 import com.google.firebase.storage.FirebaseStorage;
@@ -49,9 +52,27 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
         return new MyViewHolder(itemView);
     }
 
+    private UserInfo user;
+    FragmentActivity fragmentActivity;
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
         UserInfo item = list.get(position);
+        if (context instanceof FragmentActivity) {
+            fragmentActivity = (FragmentActivity) context;
+        }
+        // Kiểm tra xem có dữ liệu tài khoản đã được lưu trữ hay không
+        ProfileDataLoader.loadProfileData(context, new ProfileDataLoader.OnProfileDataLoadedListener() {
+            @Override
+            public void onProfileDataLoaded(UserInfo u) {
+                user = u;
+            }
+            @Override
+            public void onProfileDataLoadFailed() {
+                //fragmentActivity.getSupportFragmentManager().popBackStack();
+            }
+        });
+
+
         holder.textViewTitle.setText(item.getUsername());
         holder.textViewFollowers.setText(String.valueOf(item.getFollowers().size()) + " Followers");
         // Load image using Glide library
@@ -82,7 +103,12 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
                 // Kiểm tra xem context có phải là instance của MainActivity hay không
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
-                    mainActivity.openProfileDetailFragment(item);
+                    if(item.getId().equals(user.getId())){
+                        mainActivity.openProfileFragment();
+                    }
+                    else {
+                        mainActivity.openProfileDetailFragment(item);
+                    }
                 }
             }
         });

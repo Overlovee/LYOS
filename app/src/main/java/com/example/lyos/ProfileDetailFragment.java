@@ -19,6 +19,8 @@ import android.view.ViewGroup;
 import com.bumptech.glide.Glide;
 import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.SongHandler;
+import com.example.lyos.FirebaseHandlers.UserHandler;
+import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.databinding.FragmentProfileDetailBinding;
@@ -35,7 +37,7 @@ import java.util.ArrayList;
  * create an instance of this fragment.
  */
 public class ProfileDetailFragment extends Fragment {
-    private UserInfo user;
+    private UserInfo currentUserInfo;
     private FragmentProfileDetailBinding fragmentProfileDetailBinding;
 
     // TODO: Rename parameter arguments, choose names that match
@@ -49,11 +51,11 @@ public class ProfileDetailFragment extends Fragment {
 
     public ProfileDetailFragment() {
         // Required empty public constructor
-        user = null;
+        currentUserInfo = null;
     }
     public ProfileDetailFragment(UserInfo user) {
         // Required empty public constructor
-        this.user = user;
+        this.currentUserInfo = user;
     }
     /**
      * Use this factory method to create a new instance of
@@ -92,16 +94,29 @@ public class ProfileDetailFragment extends Fragment {
 
     private ArrayList<Song> trackArrayList = new ArrayList<>();
     private ArrayList<Song> likeArrayList = new ArrayList<>();
+    private UserInfo user;
     SongRecycleViewAdapter adapter;
     Context context;
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         context = getContext();
-        if(user != null){
+        // Kiểm tra xem có dữ liệu tài khoản đã được lưu trữ hay không
+        ProfileDataLoader.loadProfileData(requireContext(), new ProfileDataLoader.OnProfileDataLoadedListener() {
+            @Override
+            public void onProfileDataLoaded(UserInfo u) {
+                user = u;
+            }
+
+            @Override
+            public void onProfileDataLoadFailed() {
+
+            }
+        });
+        if(currentUserInfo != null){
             setUpUI();
             addEvents();
-            if(user.getLikes().size() > 0){
+            if(currentUserInfo.getLikes().size() > 0){
                 fragmentProfileDetailBinding.textViewZeroLikes.setVisibility(View.GONE);
                 fragmentProfileDetailBinding.recycleViewLikeItems.setVisibility(View.VISIBLE);
                 fragmentProfileDetailBinding.textViewSeeAllLikesAction.setVisibility(View.VISIBLE);
@@ -119,12 +134,12 @@ public class ProfileDetailFragment extends Fragment {
         }
     }
     private void setUpUI(){
-        fragmentProfileDetailBinding.textViewUserName.setText(user.getUsername());
-        fragmentProfileDetailBinding.textViewHeaderUserName.setText(user.getUsername());
-        fragmentProfileDetailBinding.textViewFollowers.setText(String.valueOf(user.getFollowers().size()) + " Followers");
-        fragmentProfileDetailBinding.textViewFollowing.setText(String.valueOf(user.getFollowing().size()) + " Following");
+        fragmentProfileDetailBinding.textViewUserName.setText(currentUserInfo.getUsername());
+        fragmentProfileDetailBinding.textViewHeaderUserName.setText(currentUserInfo.getUsername());
+        fragmentProfileDetailBinding.textViewFollowers.setText(String.valueOf(currentUserInfo.getFollowers().size()) + " Followers");
+        fragmentProfileDetailBinding.textViewFollowing.setText(String.valueOf(currentUserInfo.getFollowing().size()) + " Following");
 
-        String imagePath = "user_images/" + user.getProfilePhoto();
+        String imagePath = "user_images/" + currentUserInfo.getProfilePhoto();
         StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
         storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
             Glide.with(context).load(uri).into(fragmentProfileDetailBinding.imageViewProfile);
@@ -132,7 +147,7 @@ public class ProfileDetailFragment extends Fragment {
             // Handle any errors
         });
 
-        imagePath = "user_banner_images/" + user.getProfileBanner();
+        imagePath = "user_banner_images/" + currentUserInfo.getProfileBanner();
         storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
         storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
             Glide.with(context).load(uri).into(fragmentProfileDetailBinding.imageViewBanner);
@@ -142,11 +157,22 @@ public class ProfileDetailFragment extends Fragment {
         fragmentProfileDetailBinding.textViewFollowAction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                UserHandler userHandler = new UserHandler();
                 if (fragmentProfileDetailBinding.textViewFollowAction.getText().equals("Follow")) {
+                    if(currentUserInfo.getFollowers() == null){
+                        currentUserInfo.setFollowers(new ArrayList<>());
+                    }
+                    currentUserInfo.getFollowers().add(user.getId());
+                    userHandler.update(currentUserInfo.getId(), currentUserInfo);
                     fragmentProfileDetailBinding.textViewFollowAction.setText("Following");
                     fragmentProfileDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
                     fragmentProfileDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
                 } else {
+                    if(currentUserInfo.getFollowers() == null){
+                        currentUserInfo.setFollowers(new ArrayList<>());
+                    }
+                    currentUserInfo.getFollowers().remove(user.getId());
+                    userHandler.update(currentUserInfo.getId(), currentUserInfo);
                     fragmentProfileDetailBinding.textViewFollowAction.setText("Follow");
                     fragmentProfileDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
                     fragmentProfileDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
@@ -156,7 +182,7 @@ public class ProfileDetailFragment extends Fragment {
     }
     private void getLikesDataFromFirestore() {
         SongHandler handler = new SongHandler();
-        handler.getDataByListID(user.getLikes(), 6).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
+        handler.getDataByListID(currentUserInfo.getLikes(), 6).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
             @Override
             public void onComplete(@NonNull Task<ArrayList<Song>> task) {
                 if (task.isSuccessful()) {
@@ -179,7 +205,7 @@ public class ProfileDetailFragment extends Fragment {
     }
     private void getUserTracksDataFromFirestore() {
         SongHandler handler = new SongHandler();
-        handler.searchByUserID(user.getId(), 6).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
+        handler.searchByUserID(currentUserInfo.getId(), 6).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
             @Override
             public void onComplete(@NonNull Task<ArrayList<Song>> task) {
                 if (task.isSuccessful()) {
@@ -227,7 +253,7 @@ public class ProfileDetailFragment extends Fragment {
                 // Kiểm tra xem context có phải là instance của MainActivity hay không
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
-                    mainActivity.openSeeAllFragment(user.getId());
+                    mainActivity.openSeeAllFragment(currentUserInfo.getId());
                 }
             }
         });
@@ -237,7 +263,7 @@ public class ProfileDetailFragment extends Fragment {
                 // Kiểm tra xem context có phải là instance của MainActivity hay không
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
-                    mainActivity.openSeeAllFragment(user.getLikes());
+                    mainActivity.openSeeAllFragment(currentUserInfo.getLikes());
                 }
             }
         });

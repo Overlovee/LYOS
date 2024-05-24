@@ -15,16 +15,21 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.lyos.FirebaseHandlers.AlbumHandler;
 import com.example.lyos.FirebaseHandlers.PlaylistHandler;
+import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.FirebaseHandlers.UserHandler;
 import com.example.lyos.MainActivity;
 import com.example.lyos.Models.Album;
 import com.example.lyos.Models.Playlist;
 import com.example.lyos.Models.ProfileDataLoader;
+import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.R;
 import com.example.lyos.databinding.ConfirmDialogLayoutBinding;
@@ -72,6 +77,7 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
     private UserInfo currentUserInfo = new UserInfo();
     private UserInfo user;
     FragmentActivity fragmentActivity;
+    private ArrayList<Song> songArrayList;
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
         Album item = list.get(position);
@@ -141,7 +147,7 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
         holder.imageViewMoreOptionsAction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showDialog(item);
+                showDialog(holder, item);
             }
         });
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -155,9 +161,8 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
             }
         });
     }
-
     private OtherSongOptionsBottomSheetDialogLayoutBinding dialogLayoutBinding;
-    private void showDialog(Album item) {
+    private void showDialog(AlbumRecycleViewAdapter.MyViewHolder holder, Album item) {
         LayoutInflater inflater = LayoutInflater.from(context);
         dialogLayoutBinding = OtherSongOptionsBottomSheetDialogLayoutBinding.inflate(inflater);
 
@@ -175,14 +180,51 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
         dialogLayoutBinding.textViewTitle.setText(item.getTitle());
         dialogLayoutBinding.textViewUserName.setText(currentUserInfo.getUsername());
 
-        dialogLayoutBinding.layoutLike.setOnClickListener(new View.OnClickListener() {
+        dialogLayoutBinding.layoutAddToNextUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Kiểm tra xem context có phải là instance của MainActivity hay không
+                if (context instanceof MainActivity) {
+                    MainActivity mainActivity = (MainActivity) context;
+                    songArrayList = new ArrayList<>();
+                    SongHandler handler = new SongHandler();
+                    handler.getDataByListID(item.getSongList()).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
+                        @Override
+                        public void onComplete(@NonNull Task<ArrayList<Song>> task) {
+                            if (task.isSuccessful()) {
+                                songArrayList = task.getResult();
+                                mainActivity.addToNextUp(songArrayList);
+                                dialog.dismiss();
+                            } else {
+                                //and more action --.--
+                                Toast.makeText(context, "Can not add to next up!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
 
-                dialog.dismiss();
-
+                }
             }
         });
+        dialogLayoutBinding.layoutGoToUserProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Kiểm tra xem context có phải là instance của MainActivity hay không
+                if (context instanceof MainActivity) {
+                    MainActivity mainActivity = (MainActivity) context;
+                    if(currentUserInfo.getId().equals(user.getId())){
+                        mainActivity.openProfileFragment();
+                        dialog.dismiss();
+                    }
+                    else {
+                        mainActivity.openProfileDetailFragment(currentUserInfo);
+                    }
+                }
+            }
+        });
+
+        dialogLayoutBinding.layoutLike.setVisibility(View.GONE);
+        dialogLayoutBinding.layoutDelete.setVisibility(View.GONE);
+        dialogLayoutBinding.layoutUpdate.setVisibility(View.GONE);
 
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);

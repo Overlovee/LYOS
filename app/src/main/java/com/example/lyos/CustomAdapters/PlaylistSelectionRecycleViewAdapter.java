@@ -4,7 +4,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.net.Uri;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,9 +15,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -32,7 +28,6 @@ import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.R;
 import com.example.lyos.databinding.ConfirmDialogLayoutBinding;
-import com.example.lyos.databinding.OtherSongOptionsBottomSheetDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -42,9 +37,10 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 
-public class PlaylistRecycleViewAdapter extends RecyclerView.Adapter<PlaylistRecycleViewAdapter.MyViewHolder>{
+public class PlaylistSelectionRecycleViewAdapter extends RecyclerView.Adapter<PlaylistSelectionRecycleViewAdapter.MyViewHolder>{
     private Context context;
     private ArrayList<Playlist> list;
+    private Song song;
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public ImageView imageViewItem;
         public TextView textViewTitle;
@@ -60,9 +56,10 @@ public class PlaylistRecycleViewAdapter extends RecyclerView.Adapter<PlaylistRec
         }
     }
 
-    public PlaylistRecycleViewAdapter(Context context, ArrayList<Playlist> list) {
+    public PlaylistSelectionRecycleViewAdapter(Context context, ArrayList<Playlist> list, Song song) {
         this.context = context;
         this.list = list;
+        this.song = song;
     }
 
     @Override
@@ -86,13 +83,7 @@ public class PlaylistRecycleViewAdapter extends RecyclerView.Adapter<PlaylistRec
             public void onProfileDataLoaded(UserInfo u) {
                 user = u;
                 if (user != null){
-                    holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                        @Override
-                        public boolean onLongClick(View v) {
-                            showDeleteDialog(holder, item);
-                            return false;
-                        }
-                    });
+                    updateUI(holder, item);
                 } else {
                     fragmentActivity.getSupportFragmentManager().popBackStack();
                 }
@@ -102,11 +93,19 @@ public class PlaylistRecycleViewAdapter extends RecyclerView.Adapter<PlaylistRec
                 fragmentActivity.getSupportFragmentManager().popBackStack();
             }
         });
-
+        updateUI(holder, item);
+    }
+    private void updateUI(PlaylistSelectionRecycleViewAdapter.MyViewHolder holder, Playlist item){
+        holder.itemView.setEnabled(true);
+        holder.imageViewItem.setAlpha(1.0f);
         holder.textViewTitle.setText(item.getTitle());
         if(item.getSongList() == null){
             holder.textViewTracks.setText("Playlist: 0 tracks");
         } else {
+            if(item.getSongList().contains(song.getId())){
+                holder.itemView.setEnabled(false);
+                holder.imageViewItem.setAlpha(0.6f);
+            }
             holder.textViewTracks.setText("Playlist: " + String.valueOf(item.getSongList().size()) + " tracks");
             SongHandler handler = new SongHandler();
             handler.getInfoByID(item.getSongList().get(0)).addOnCompleteListener(new OnCompleteListener<Song>() {
@@ -167,63 +166,24 @@ public class PlaylistRecycleViewAdapter extends RecyclerView.Adapter<PlaylistRec
                 }
             }
         });
+
+        addEvents(holder, item);
     }
-    private void showDeleteDialog(PlaylistRecycleViewAdapter.MyViewHolder holder, Playlist item) {
-        LayoutInflater inflater = LayoutInflater.from(context);
-        ConfirmDialogLayoutBinding dialogLayoutBinding = ConfirmDialogLayoutBinding.inflate(inflater);
-
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(dialogLayoutBinding.getRoot());
-
-        PlaylistHandler playlistHandler = new PlaylistHandler();
-        dialogLayoutBinding.layoutYes.setOnClickListener(new View.OnClickListener() {
+    private void addEvents(PlaylistSelectionRecycleViewAdapter.MyViewHolder holder, Playlist item){
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playlistHandler.delete(item.getId())
-                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                Toast.makeText(context, "Delete successfully!", Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                                holder.itemView.setVisibility(View.GONE);
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Toast.makeText(context, "Can not delete!", Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                            }
-                        });
-            }
-        });
+                if(item.getSongList() == null){
+                    item.setSongList(new ArrayList<>());
+                }
+                item.getSongList().add(song.getId());
 
-        dialogLayoutBinding.layoutNo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
+                PlaylistHandler playlistHandler = new PlaylistHandler();
+                playlistHandler.update(item.getId(), item);
 
+                updateUI(holder, item);
             }
         });
-        dialogLayoutBinding.buttonBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialogLayoutBinding.buttonClose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.show();
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
-        dialog.getWindow().setGravity(Gravity.BOTTOM);
-
     }
     @Override
     public int getItemCount() {

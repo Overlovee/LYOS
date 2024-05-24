@@ -496,7 +496,6 @@ public class MainActivity extends AppCompatActivity {
                 activityMainBinding.layoutNowPlaying.setVisibility(View.VISIBLE);
             }
             if (player == null) {
-                player = new ExoPlayer.Builder(MainActivity.this).build();
                 initializePlayerListener();
             }
             if (currentSongArrayList == null) {
@@ -511,6 +510,7 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("StaticFieldLeak")
     public void setAudioNowPlaying(Song item) {
+        initializePlayerListener();
         // Thêm bài hát vào danh sách hiện tại
         if(currentSongArrayList == null){
             currentSongArrayList = new ArrayList<>();
@@ -609,15 +609,11 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize the player if it's null
         if (player == null) {
-            player = new ExoPlayer.Builder(MainActivity.this).build();
-            // Initialize the player listener
             initializePlayerListener();
         } else {
             // Clear the current playlist and stop the player
             clearPlaylist();
             if (player == null) {
-                player = new ExoPlayer.Builder(MainActivity.this).build();
-                // Initialize the player listener
                 initializePlayerListener();
             }
         }
@@ -786,46 +782,51 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void initializePlayerListener() {
-        player.setRepeatMode(Player.REPEAT_MODE_ALL);
-        player.addListener(new Player.Listener() {
-            @Override
-            public void onPlaybackStateChanged(int state) {
-                updatePlayPauseButton(player.getPlayWhenReady() && state == Player.STATE_READY);
-                if (state == Player.STATE_READY) {
-                    if (currentlyPlayingSongDialogLayoutBinding != null) {
-                        long duration = player.getDuration();
-                        currentlyPlayingSongDialogLayoutBinding.seekBarDuration.setMax((int) duration);
-                    }
-                    if (player.getPlayWhenReady()) {
-                        updateSeekBar();
-                    } else {
+        if(player == null){
+            player = new ExoPlayer.Builder(MainActivity.this).build();
+            player.setRepeatMode(Player.REPEAT_MODE_ALL);
+            player.addListener(new Player.Listener() {
+                @Override
+                public void onPlaybackStateChanged(int state) {
+                    updatePlayPauseButton(player.getPlayWhenReady() && state == Player.STATE_READY);
+                    if (state == Player.STATE_READY) {
+                        if (currentlyPlayingSongDialogLayoutBinding != null) {
+                            long duration = player.getDuration();
+                            currentlyPlayingSongDialogLayoutBinding.seekBarDuration.setMax((int) duration);
+                        }
+                        if (player.getPlayWhenReady()) {
+                            updateSeekBar();
+                        } else {
 
-                    }
-                } else if (state == Player.STATE_ENDED) {
+                        }
+                    } else if (state == Player.STATE_ENDED) {
 
-                }
-            }
-
-            @Override
-            public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
-                if (mediaItem != null) {
-                    // Lấy index của bài hát hiện tại
-                    int currentIndex = player.getCurrentMediaItemIndex();
-
-                    // Kiểm tra currentSongArrayList không null và index hợp lệ
-                    if (currentSongArrayList != null && currentIndex >= 0 && currentIndex < currentSongArrayList.size()) {
-                        // Lấy bài hát từ danh sách dựa trên index
-                        Song currentSong = currentSongArrayList.get(currentIndex);
-
-                        // Cập nhật UI với thông tin bài hát hiện tại
-                        updateNowPlayingUI(currentSong);
-                    } else {
-                        // Log lỗi nếu currentSongArrayList bị null hoặc index không hợp lệ
-                        Log.e("onMediaItemTransition", "currentSongArrayList is null or index out of bounds. currentIndex: " + currentIndex);
                     }
                 }
-            }
-        });
+
+                @Override
+                public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
+                    if (mediaItem != null) {
+                        // Lấy index của bài hát hiện tại
+                        int currentIndex = player.getCurrentMediaItemIndex();
+
+                        // Kiểm tra currentSongArrayList không null và index hợp lệ
+                        if (currentSongArrayList != null && currentIndex >= 0 && currentIndex < currentSongArrayList.size()) {
+                            // Lấy bài hát từ danh sách dựa trên index
+                            Song currentSong = currentSongArrayList.get(currentIndex);
+
+                            // Cập nhật UI với thông tin bài hát hiện tại
+                            updateNowPlayingUI(currentSong);
+                            currentSong.setListens(currentSong.getListens() + 1);
+                            songHandler.updateSong(currentSong.getId(), currentSong);
+                        } else {
+                            // Log lỗi nếu currentSongArrayList bị null hoặc index không hợp lệ
+                            Log.e("onMediaItemTransition", "currentSongArrayList is null or index out of bounds. currentIndex: " + currentIndex);
+                        }
+                    }
+                }
+            });
+        }
     }
     private void updatePlayPauseButton(boolean isPlaying) {
         if (isPlaying) {
@@ -990,10 +991,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     public void addToNextUp(ArrayList<Song> songArrayList) {
+        if (player == null) {
+            initializePlayerListener();
+        }
+        if (currentSongArrayList == null) {
+            currentSongArrayList = new ArrayList<>();
+        }
+
         // Hiển thị layout Now Playing nếu chưa hiển thị
         setVisibleLayoutNowPlaying(true);
+
         // Lấy vị trí hiện tại của bài hát đang phát
-        int currentIndex = player.getCurrentMediaItemIndex();
+        int currentIndex = (player != null) ? player.getCurrentMediaItemIndex() : -1;
 
         // Thêm tất cả các bài hát trong songArrayList vào sau bài hát đang phát trong danh sách hiện tại
         if (currentIndex >= 0 && currentIndex < currentSongArrayList.size()) {
@@ -1002,7 +1011,6 @@ public class MainActivity extends AppCompatActivity {
             currentSongArrayList.addAll(songArrayList);
         }
 
-        // Thêm tất cả các MediaItem của songArrayList vào danh sách phát của player
         if (player != null) {
             for (Song song : songArrayList) {
                 String mp3Path = "mp3s/" + song.getMp3FileName();
@@ -1011,7 +1019,25 @@ public class MainActivity extends AppCompatActivity {
                     // Tạo MediaItem từ URL
                     MediaItem mediaItem = MediaItem.fromUri(uri);
                     // Thêm MediaItem vào vị trí tiếp theo của bài hát đang phát
-                    player.addMediaItem(currentIndex + 1, mediaItem);
+                    if (currentIndex >= 0) {
+                        player.addMediaItem(currentIndex + 1, mediaItem);
+                    } else {
+                        player.addMediaItem(mediaItem);
+                    }
+
+                    // Kiểm tra trạng thái của player
+                    if (player.getPlaybackState() == Player.STATE_IDLE) {
+                        player.prepare();
+                        player.play();
+                    } else if (!player.isPlaying()) {
+                        player.play();
+                    }
+
+                    // Nếu player chưa có bài hát nào, phát bài hát đầu tiên ngay sau khi thêm
+                    if (player.getMediaItemCount() == 1) {
+                        player.seekTo(0, 0);
+                        player.play();
+                    }
                 }).addOnFailureListener(exception -> {
                     // Xử lý lỗi tải URL
                     Toast.makeText(MainActivity.this, "Error: Cannot load mp3!", Toast.LENGTH_LONG).show();
@@ -1022,6 +1048,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void hideToolbar(){
         activityMainBinding.toolbar.setVisibility(View.GONE);
+    }
+    public void openProfileFragment() {
+        activityMainBinding.bottomNavigationMain.setSelectedItemId(R.id.navigation_profile);
     }
     public void openProfileDetailFragment(UserInfo item) {
         hideToolbar();

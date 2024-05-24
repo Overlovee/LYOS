@@ -1,9 +1,7 @@
 package com.example.lyos.CustomAdapters;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
@@ -12,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,7 +18,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -29,18 +25,15 @@ import com.example.lyos.FirebaseHandlers.PlaylistHandler;
 import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.FirebaseHandlers.UserHandler;
 import com.example.lyos.MainActivity;
+import com.example.lyos.Models.ColorUtils;
 import com.example.lyos.Models.Playlist;
 import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
-import com.example.lyos.ProfileFragment;
 import com.example.lyos.R;
 import com.example.lyos.databinding.AddingToPlaylistDialogLayoutBinding;
-import com.example.lyos.databinding.ConfirmDialogLayoutBinding;
-import com.example.lyos.databinding.GetAudioDialogLayoutBinding;
 import com.example.lyos.databinding.OtherSongOptionsBottomSheetDialogLayoutBinding;
 import com.example.lyos.databinding.PlaylistAddingDialogLayoutBinding;
-import com.example.lyos.databinding.SongEditingDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -49,8 +42,9 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.Random;
 
-public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleViewAdapter.MyViewHolder>{
+public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSongRecycleViewAdapter.MyViewHolder>{
     private Context context;
     private ArrayList<Song> list;
     public class MyViewHolder extends RecyclerView.ViewHolder {
@@ -59,6 +53,7 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
         public TextView textViewTitle;
         public TextView textViewUserName;
         public TextView textViewDuration;
+        public TextView textViewSerial;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -67,17 +62,18 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
             textViewTitle = itemView.findViewById(R.id.textViewTitle);
             textViewUserName = itemView.findViewById(R.id.textViewUserName);
             textViewDuration = itemView.findViewById(R.id.textViewDuration);
+            textViewSerial = itemView.findViewById(R.id.textViewSerial);
         }
     }
 
-    public SongRecycleViewAdapter(Context context, ArrayList<Song> list) {
+    public RankedSongRecycleViewAdapter(Context context, ArrayList<Song> list) {
         this.context = context;
         this.list = list;
     }
 
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_song_recycleview_item, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_ranked_song_recycleview_item, parent, false);
         return new MyViewHolder(itemView);
     }
 
@@ -85,9 +81,19 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
     private UserInfo currentUserInfo = new UserInfo();
     FragmentActivity fragmentActivity;
     SongHandler songHandler;
+    private ArrayList<Integer> colors;
+    private Random random;
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
         Song item = list.get(position);
+        colors = ColorUtils.getColors();
+        random = new Random();
+        holder.textViewSerial.setText(String.valueOf(position + 1));
+        // Lấy màu ngẫu nhiên từ danh sách và gán cho textViewSerial
+        int color = colors.get(random.nextInt(colors.size()));
+        holder.textViewSerial.setTextColor(color);
+
+
         holder.textViewTitle.setText(item.getTitle());
         if (context instanceof FragmentActivity) {
             fragmentActivity = (FragmentActivity) context;
@@ -185,16 +191,8 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
         });
         dialogLayoutBinding.textViewTitle.setText(item.getTitle());
         dialogLayoutBinding.textViewUserName.setText(currentUserInfo.getUsername());
-        if(currentUserInfo.getId().equals(user.getId())){
-
-            dialogLayoutBinding.layoutDelete.setVisibility(View.VISIBLE);
-            dialogLayoutBinding.layoutUpdate.setVisibility(View.VISIBLE);
-
-        }
-        else {
-            dialogLayoutBinding.layoutDelete.setVisibility(View.GONE);
-            dialogLayoutBinding.layoutUpdate.setVisibility(View.GONE);
-        }
+        dialogLayoutBinding.layoutDelete.setVisibility(View.GONE);
+        dialogLayoutBinding.layoutUpdate.setVisibility(View.GONE);
 
         if(item.getLikedBy() != null){
             if(item.getLikedBy().contains(user.getId())){
@@ -243,7 +241,6 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
                         });
             }
         });
-
         dialogLayoutBinding.layoutAddToNextUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -276,18 +273,6 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
                 }
             }
         });
-        dialogLayoutBinding.layoutUpdate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showUpdateDialog(holder, item, dialog);
-            }
-        });
-        dialogLayoutBinding.layoutDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showDeleteDialog(holder, item, dialog);
-            }
-        });
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -295,130 +280,6 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
         dialog.getWindow().setGravity(Gravity.BOTTOM);
 
     }
-    private void showDeleteDialog(MyViewHolder holder, Song item, Dialog parentDialog) {
-        LayoutInflater inflater = LayoutInflater.from(context);
-        ConfirmDialogLayoutBinding dialogLayoutBinding = ConfirmDialogLayoutBinding.inflate(inflater);
-
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(dialogLayoutBinding.getRoot());
-
-        SongHandler songHandler = new SongHandler();
-        dialogLayoutBinding.layoutYes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                songHandler.deleteSong(item.getId())
-                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                Toast.makeText(context, "Delete successfully!", Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                                parentDialog.dismiss();
-                                holder.itemView.setVisibility(View.GONE);
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Toast.makeText(context, "Can not delete!", Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                            }
-                        });
-            }
-        });
-
-        dialogLayoutBinding.layoutNo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-
-            }
-        });
-        dialogLayoutBinding.buttonBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialogLayoutBinding.buttonClose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.show();
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
-        dialog.getWindow().setGravity(Gravity.BOTTOM);
-
-    }
-    private void showUpdateDialog(MyViewHolder holder, Song item, Dialog parentDialog) {
-        LayoutInflater inflater = LayoutInflater.from(context);
-        SongEditingDialogLayoutBinding dialogLayoutBinding = SongEditingDialogLayoutBinding.inflate(inflater);
-
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(dialogLayoutBinding.getRoot());
-
-        SongHandler songHandler = new SongHandler();
-
-        String imagePath = "images/" + item.getImageFileName();
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
-        storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-            Glide.with(context).load(uri).into(dialogLayoutBinding.imageView);
-        }).addOnFailureListener(exception -> {
-            // Handle any errors
-        });
-
-        dialogLayoutBinding.editTextTitle.setText(item.getTitle());
-        dialogLayoutBinding.editTextTag.setText(item.getTag());
-        dialogLayoutBinding.editTextDescription.setText(item.getDescription());
-        dialogLayoutBinding.textViewUpdate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String title = dialogLayoutBinding.editTextTitle.getText().toString();
-                String tag = dialogLayoutBinding.editTextTag.getText().toString();
-                String description = dialogLayoutBinding.editTextDescription.getText().toString();
-                if(!title.isEmpty() || !tag.isEmpty() || !description.isEmpty()){
-                    item.setTitle(title);
-                    item.setTag(tag);
-                    item.setDescription(description);
-                    songHandler.updateSong(item.getId(), item)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void aVoid) {
-                                    Toast.makeText(context, "Update successfully!", Toast.LENGTH_SHORT).show();
-                                    holder.textViewTitle.setText(item.getTitle());
-                                    parentDialog.dismiss();
-                                    dialog.dismiss();
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Toast.makeText(context, "Can not update!", Toast.LENGTH_SHORT).show();
-                                    parentDialog.dismiss();
-                                    dialog.dismiss();
-                                }
-                            });
-                }
-            }
-        });
-        dialogLayoutBinding.textViewCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.show();
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
-        dialog.getWindow().setGravity(Gravity.BOTTOM);
-
-    }
-
     private void showAddingToPlaylistDialog(Song song){
         LayoutInflater inflater = LayoutInflater.from(context);
         AddingToPlaylistDialogLayoutBinding addingToPlaylistDialogLayoutBinding = AddingToPlaylistDialogLayoutBinding.inflate(inflater);

@@ -1,5 +1,6 @@
 package com.example.lyos;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -21,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Environment;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,9 +35,11 @@ import com.bumptech.glide.Glide;
 import com.example.lyos.CustomAdapters.AlbumRecycleViewAdapter;
 import com.example.lyos.CustomAdapters.PlaylistRecycleViewAdapter;
 import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
+import com.example.lyos.CustomAdapters.TracksSelectionRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.AlbumHandler;
 import com.example.lyos.FirebaseHandlers.PlaylistHandler;
 import com.example.lyos.FirebaseHandlers.SongHandler;
+import com.example.lyos.Interfaces.OnSelectionChangedListener;
 import com.example.lyos.Models.Album;
 import com.example.lyos.Models.Playlist;
 import com.example.lyos.Models.ProfileDataLoader;
@@ -54,13 +58,15 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link AlbumsFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AlbumsFragment extends Fragment {
+public class AlbumsFragment extends Fragment{
     private FragmentAlbumsBinding fragmentAlbumsBinding;
 
     // TODO: Rename parameter arguments, choose names that match
@@ -166,31 +172,6 @@ public class AlbumsFragment extends Fragment {
             }
         });
     }
-    //    private void getUserTracksDataFromFirestore() {
-//        SongHandler handler = new SongHandler();
-//        handler.searchByUserID(user.getId(), 6).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
-//            @Override
-//            public void onComplete(@NonNull Task<ArrayList<Song>> task) {
-//                if (task.isSuccessful()) {
-//                    tracksArrayList = task.getResult();
-//                    if(!tracksArrayList.isEmpty()){
-//                        fragmentPlaylistsBinding.layoutTracks.setVisibility(View.VISIBLE);
-//                        trackAdapter = new SongRecycleViewAdapter(context, tracksArrayList);
-//                        fragmentPlaylistsBinding.recycleViewTrackItems.setAdapter(trackAdapter);
-//                        fragmentPlaylistsBinding.recycleViewTrackItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
-//                        RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(context);
-//                        fragmentPlaylistsBinding.recycleViewTrackItems.setLayoutManager(mLayoutManager);
-//                        fragmentPlaylistsBinding.recycleViewTrackItems.setItemAnimator(new DefaultItemAnimator());
-//                    } else {
-//                        fragmentPlaylistsBinding.layoutTracks.setVisibility(View.GONE);
-//                    }
-//                } else {
-//                    //and more action --.--
-//                    fragmentPlaylistsBinding.layoutTracks.setVisibility(View.GONE);
-//                }
-//            }
-//        });
-//    }
     private void addEvents(){
         fragmentAlbumsBinding.layoutCreateNew.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -200,6 +181,9 @@ public class AlbumsFragment extends Fragment {
         });
     }
     private AlbumAddingDialogLayoutBinding dialogAlbumAddindBinding;
+    private ArrayList<Pair<Song, Boolean>> songSelectionArrayList;
+    private ArrayList<Song> songArrayList;
+    private TracksSelectionRecycleViewAdapter tracksSelectionRecycleViewAdapter;
     private void showPlaylistAddingDialog() {
         LayoutInflater inflater = LayoutInflater.from(context);
         dialogAlbumAddindBinding = AlbumAddingDialogLayoutBinding.inflate(inflater);
@@ -219,21 +203,75 @@ public class AlbumsFragment extends Fragment {
             public void onClick(View v) {
                 String title = dialogAlbumAddindBinding.editTextTitle.getText().toString();
                 String description = dialogAlbumAddindBinding.editTextDescription.getText().toString();
-                if(!title.isEmpty()
-                    && selectedImageUri != null
-                ){
+                // Tạo danh sách mới để chứa các bài hát đã chọn
+                ArrayList<String> selectedSongs = new ArrayList<>();
+
+                // Lặp qua danh sách songSelectionArrayList để lấy các bài hát đã chọn
+                for (Pair<Song, Boolean> pair : songSelectionArrayList) {
+                    if (pair.second) { // Kiểm tra xem bài hát có được chọn không
+                        selectedSongs.add(pair.first.getId());
+                    }
+                }
+
+                // Kiểm tra xem đã nhập đủ thông tin và có bài hát nào được chọn không
+                if (!title.isEmpty() && selectedImageUri != null && !selectedSongs.isEmpty()) {
                     Album newAlbum = new Album();
                     newAlbum.setTitle(title);
                     newAlbum.setDescription(description);
                     newAlbum.setUserID(user.getId());
+                    newAlbum.setSongList(selectedSongs);
                     uploadNewAlbum(newAlbum);
                     dialog.dismiss();
-                }
-                else {
-                    Toast.makeText(context, "Please type all fields", Toast.LENGTH_LONG);
+                } else {
+                    Toast.makeText(context, "Please type all fields and select at least one song", Toast.LENGTH_LONG).show();
                 }
             }
         });
+
+        SongHandler handler = new SongHandler();
+        songSelectionArrayList = new ArrayList<>();
+        songArrayList = new ArrayList<>();
+        handler.getSongsNotInAnyAlbum(user.getId()).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
+            @Override
+            public void onComplete(@NonNull Task<ArrayList<Song>> task) {
+                if (task.isSuccessful()) {
+                    songArrayList = task.getResult();
+                    if(!songArrayList.isEmpty()){
+                        for (Song song: songArrayList
+                             ) {
+                            songSelectionArrayList.add(new Pair<>(song, false));
+                        }
+                        dialogAlbumAddindBinding.textViewNoTracks.setVisibility(View.GONE);
+                        dialogAlbumAddindBinding.recycleViewTrackItems.setVisibility(View.VISIBLE);
+
+                        tracksSelectionRecycleViewAdapter = new TracksSelectionRecycleViewAdapter(context, songSelectionArrayList);
+                        tracksSelectionRecycleViewAdapter.setOnSelectionChangedListener(new OnSelectionChangedListener() {
+                            @SuppressLint("NotifyDataSetChanged")
+                            @Override
+                            public void onSelectionChanged(int position, boolean isSelected) {
+                                Pair<Song, Boolean> pair = songSelectionArrayList.get(position);
+                                pair = new Pair<>(pair.first, isSelected);
+                                songSelectionArrayList.set(position, pair);
+                                tracksSelectionRecycleViewAdapter.notifyDataSetChanged();
+                            }
+                        });
+                        dialogAlbumAddindBinding.recycleViewTrackItems.setAdapter(tracksSelectionRecycleViewAdapter);
+                        dialogAlbumAddindBinding.recycleViewTrackItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
+                        RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(context);
+                        dialogAlbumAddindBinding.recycleViewTrackItems.setLayoutManager(mLayoutManager);
+                        dialogAlbumAddindBinding.recycleViewTrackItems.setItemAnimator(new DefaultItemAnimator());
+                    } else {
+                        dialogAlbumAddindBinding.textViewNoTracks.setVisibility(View.VISIBLE);
+                        dialogAlbumAddindBinding.recycleViewTrackItems.setVisibility(View.GONE);
+                    }
+                } else {
+                    //and more action --.--
+                    dialogAlbumAddindBinding.textViewNoTracks.setVisibility(View.VISIBLE);
+                    dialogAlbumAddindBinding.recycleViewTrackItems.setVisibility(View.GONE);
+                }
+            }
+        });
+
         dialogAlbumAddindBinding.textViewCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -271,6 +309,7 @@ public class AlbumsFragment extends Fragment {
                             // Thêm mục Song vào Firebase Database bằng cách sử dụng SongHandler
                             AlbumHandler albumHandler = new AlbumHandler();
                             albumHandler.add(item);
+                            getAlbumsDataFromFirestore();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {

@@ -2,6 +2,7 @@ package com.example.lyos.FirebaseHandlers;
 
 import androidx.annotation.NonNull;
 
+import com.example.lyos.Models.Album;
 import com.example.lyos.Models.Song;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -149,7 +150,75 @@ public class SongHandler {
             }
         });
     }
+    public Task<ArrayList<Song>> getTopSongs(int limit) {
+        ArrayList<Song> list = new ArrayList<>();
+        return collection.orderBy("listens", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .limit(limit)
+                .get()
+                .continueWith(new Continuation<QuerySnapshot, ArrayList<Song>>() {
+                    @Override
+                    public ArrayList<Song> then(@NonNull Task<QuerySnapshot> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Song item = document.toObject(Song.class);
+                                if (item != null) {
+                                    item.setId(document.getId());
+                                    list.add(item);
+                                }
+                            }
+                        }
+                        return list;
+                    }
+                });
+    }
+    public Task<ArrayList<Song>> getSongsNotInAnyAlbum(String userId) {
+        // Tạo một danh sách để lưu trữ các ID của các bài hát nằm trong album của người dùng
+        ArrayList<String> songIdsInAlbums = new ArrayList<>();
 
+        // Tạo một task để lấy tất cả các album của người dùng
+        Task<ArrayList<Album>> userAlbumsTask = new AlbumHandler().searchByUserID(userId);
+
+        // Tạo một task để lấy tất cả các bài hát của người dùng
+        Task<ArrayList<Song>> userSongsTask = new SongHandler().searchByUserID(userId);
+
+        // Sử dụng Tasks.whenAllSuccess để chờ cả hai task hoàn thành
+        return Tasks.whenAllSuccess(userAlbumsTask, userSongsTask).continueWith(new Continuation<List<Object>, ArrayList<Song>>() {
+            @Override
+            public ArrayList<Song> then(@NonNull Task<List<Object>> task) throws Exception {
+                // Kiểm tra xem cả hai task đã hoàn thành thành công không
+                if (task.isSuccessful()) {
+                    // Lấy danh sách album và danh sách bài hát từ kết quả task
+                    ArrayList<Album> userAlbums = (ArrayList<Album>) task.getResult().get(0);
+                    ArrayList<Song> userSongs = (ArrayList<Song>) task.getResult().get(1);
+
+                    // Lặp qua tất cả các album và lấy danh sách các bài hát nằm trong album
+                    for (Album album : userAlbums) {
+                        if (album.getSongList() != null) {
+                            songIdsInAlbums.addAll(album.getSongList());
+                        }
+                    }
+
+                    // Lọc ra các bài hát không nằm trong album
+                    ArrayList<Song> songsNotInAlbums = new ArrayList<>();
+                    for (Song song : userSongs) {
+                        if (!songIdsInAlbums.contains(song.getId())) {
+                            songsNotInAlbums.add(song);
+                        }
+                    }
+
+                    // Trả về danh sách các bài hát không nằm trong album
+                    return songsNotInAlbums;
+                } else {
+                    // Nếu có lỗi xảy ra trong quá trình lấy dữ liệu, trả về null hoặc xử lý theo ý muốn của bạn
+                    Exception exception = task.getException();
+                    if (exception != null) {
+                        exception.printStackTrace();
+                    }
+                    return null;
+                }
+            }
+        });
+    }
     private String normalizeString(String input) {
         // Remove non-alphanumeric characters and convert to lowercase
         return input.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
@@ -181,9 +250,9 @@ public class SongHandler {
                     @Override
                     public Task<Void> then(@NonNull Task<Void> task) throws Exception {
                         if (task.isSuccessful()) {
-                            return Tasks.forResult(null); // Thành công, trả về Task<Void> trống
+                            return Tasks.forResult(null);
                         } else {
-                            throw task.getException(); // Thất bại, ném ra ngoại lệ
+                            throw task.getException();
                         }
                     }
                 });
