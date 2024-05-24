@@ -29,4 +29,28 @@ public class ColorUtils {
         colors.add(Color.rgb(240, 230, 140)); // Khaki
         return colors;
     }
+    public static ArrayList<Integer> getBrightColors() {
+        ArrayList<Integer> colors = new ArrayList<>();
+        colors.add(Color.rgb(255, 105, 180)); // Hot Pink
+        colors.add(Color.rgb(255, 182, 193)); // Light Pink
+        colors.add(Color.rgb(255, 255, 224)); // Light Yellow
+        colors.add(Color.rgb(144, 238, 144)); // Light Green
+        colors.add(Color.rgb(173, 216, 230)); // Light Blue
+        colors.add(Color.rgb(240, 128, 128)); // Light Coral
+        colors.add(Color.rgb(255, 250, 205)); // Lemon Chiffon
+        colors.add(Color.rgb(250, 250, 210)); // Light Goldenrod Yellow
+        colors.add(Color.rgb(255, 228, 181)); // Moccasin
+        colors.add(Color.rgb(255, 222, 173)); // Navajo White
+        colors.add(Color.rgb(255, 228, 225)); // Misty Rose
+        colors.add(Color.rgb(255, 239, 213)); // Papaya Whip
+        colors.add(Color.rgb(255, 218, 185)); // Peach Puff
+        colors.add(Color.rgb(255, 240, 245)); // Lavender Blush
+        colors.add(Color.rgb(255, 228, 196)); // Bisque
+        colors.add(Color.rgb(255, 248, 220)); // Cornsilk
+        colors.add(Color.rgb(250, 235, 215)); // Antique White
+        colors.add(Color.rgb(240, 255, 240)); // Honeydew
+        colors.add(Color.rgb(245, 255, 250)); // Mint Cream
+        colors.add(Color.rgb(255, 245, 238)); // Seashell
+        return colors;
+    }
 }

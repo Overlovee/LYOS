@@ -18,6 +18,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 public class SongHandler {
@@ -95,6 +96,27 @@ public class SongHandler {
                         return list;
                     }
                 });
+    }
+    public Task<ArrayList<String>> getAllUniqueTags() {
+        // Use a HashSet to store unique tags
+        HashSet<String> uniqueTagsSet = new HashSet<>();
+
+        // Perform Firestore query to get all songs
+        return collection.get().continueWith(new Continuation<QuerySnapshot, ArrayList<String>>() {
+            @Override
+            public ArrayList<String> then(@NonNull Task<QuerySnapshot> task) throws Exception {
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        Song song = document.toObject(Song.class);
+                        if (song != null && song.getTag() != null) {
+                            uniqueTagsSet.add(song.getTag());
+                        }
+                    }
+                }
+                // Convert the HashSet to an ArrayList
+                return new ArrayList<>(uniqueTagsSet);
+            }
+        });
     }
     public Task<Song> getInfoByID(String id) {
         DocumentReference docRef = collection.document(id);
