@@ -7,9 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -17,11 +15,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Environment;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -33,21 +29,17 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.lyos.CustomAdapters.AlbumRecycleViewAdapter;
-import com.example.lyos.CustomAdapters.PlaylistRecycleViewAdapter;
 import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.CustomAdapters.TracksSelectionRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.AlbumHandler;
-import com.example.lyos.FirebaseHandlers.PlaylistHandler;
 import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.Interfaces.OnSelectionChangedListener;
 import com.example.lyos.Models.Album;
-import com.example.lyos.Models.Playlist;
 import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.databinding.AlbumAddingDialogLayoutBinding;
 import com.example.lyos.databinding.FragmentAlbumsBinding;
-import com.example.lyos.databinding.PlaylistAddingDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -56,10 +48,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.

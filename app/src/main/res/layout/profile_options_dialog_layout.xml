@@ -72,5 +72,29 @@
             android:layout_height="1dp"
             android:layout_marginTop="10dp"
             android:background="#8A8A8A" />
+        <LinearLayout
+            android:id="@+id/layoutSignOut"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="10dp"
+            android:paddingHorizontal="15dp"
+            android:gravity="center_vertical"
+            tools:ignore="MissingConstraints">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/logout"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sign out"
+                android:textColor="@color/customSeccondaryColor"
+                android:paddingLeft="10dp"
+                android:textSize="20dp" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

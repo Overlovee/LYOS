@@ -10,6 +10,7 @@ import android.text.TextWatcher;
 import android.view.View;
 
 import com.example.lyos.FirebaseHandlers.UserHandler;
+import com.example.lyos.Models.AccountUtils;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.databinding.ActivitySetUpProfileBinding;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -87,5 +88,25 @@ public class SetUpProfile extends AppCompatActivity {
             startActivity(intent);
             finish();
         }
+        addEvents();
+    }
+    void addEvents(){
+        activitySetUpProfileBinding.buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                signOut();
+            }
+        });
+    }
+    public void signOut(){
+        googleSignInClient.signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                AccountUtils.removeAccount(SetUpProfile.this);
+                Intent intent = new Intent(SetUpProfile.this, Login.class);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 }

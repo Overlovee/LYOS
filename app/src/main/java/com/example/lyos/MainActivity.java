@@ -43,7 +43,6 @@ import com.example.lyos.FirebaseHandlers.UserHandler;
 import com.example.lyos.Models.AccountUtils;
 import com.example.lyos.Models.Album;
 import com.example.lyos.Models.Playlist;
-import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.databinding.ActivityMainBinding;
@@ -73,7 +72,6 @@ import at.huber.youtubeExtractor.YouTubeExtractor;
 import at.huber.youtubeExtractor.YtFile;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String ACCOUNT_TYPE = "com.example.lyos.account";
     private ActivityMainBinding activityMainBinding;
     private String account = "";
     private UserInfo user;
@@ -84,7 +82,17 @@ public class MainActivity extends AppCompatActivity {
         this.account = id;
         AccountUtils.saveAccount(MainActivity.this, account);
     }
-
+    public void signOut(){
+        googleSignInClient.signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                AccountUtils.removeAccount(MainActivity.this);
+                Intent intent = new Intent(MainActivity.this, Login.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -127,27 +135,8 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         }
-        //setAccount(account);
-
         songHandler = new SongHandler();
         activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
-
-
-        // Kiểm tra xem có dữ liệu tài khoản đã được lưu trữ hay không
-        ProfileDataLoader.loadProfileData(MainActivity.this, new ProfileDataLoader.OnProfileDataLoadedListener() {
-            @Override
-            public void onProfileDataLoaded(UserInfo u) {
-                user = u;
-                if (user != null){
-                } else {
-                    finish();
-                }
-            }
-            @Override
-            public void onProfileDataLoadFailed() {
-                finish();
-            }
-        });
 
         setSupportActionBar(activityMainBinding.toolbar);
         activityMainBinding.bottomNavigationMain.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {

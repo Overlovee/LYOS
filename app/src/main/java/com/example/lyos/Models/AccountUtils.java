@@ -23,4 +23,10 @@ public class AccountUtils {
         SharedPreferences sharedPreferences = context.getSharedPreferences(ACCOUNT_PREFS, Context.MODE_PRIVATE);
         return sharedPreferences.contains(KEY_ACCOUNT_NAME);
     }
+    public static void removeAccount(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(ACCOUNT_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove(KEY_ACCOUNT_NAME);
+        editor.apply();
+    }
 }

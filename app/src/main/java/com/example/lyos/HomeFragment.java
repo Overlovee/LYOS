@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.lyos.CustomAdapters.RankedSongRecycleViewAdapter;
-import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.Models.Song;
 import com.example.lyos.databinding.FragmentHomeBinding;

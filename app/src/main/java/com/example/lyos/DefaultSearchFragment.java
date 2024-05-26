@@ -1,50 +1,25 @@
 package com.example.lyos;
 
-import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.bumptech.glide.Glide;
-import com.example.lyos.CustomAdapters.PlaylistSelectionRecycleViewAdapter;
-import com.example.lyos.CustomAdapters.RankedSongRecycleViewAdapter;
-import com.example.lyos.FirebaseHandlers.PlaylistHandler;
 import com.example.lyos.FirebaseHandlers.SongHandler;
-import com.example.lyos.FirebaseHandlers.UserHandler;
 import com.example.lyos.Models.ColorUtils;
-import com.example.lyos.Models.Playlist;
-import com.example.lyos.Models.ProfileDataLoader;
-import com.example.lyos.Models.Song;
-import com.example.lyos.Models.UserInfo;
-import com.example.lyos.databinding.AddingToPlaylistDialogLayoutBinding;
 import com.example.lyos.databinding.FragmentDefaultSearchBinding;
-import com.example.lyos.databinding.OtherSongOptionsBottomSheetDialogLayoutBinding;
-import com.example.lyos.databinding.PlaylistAddingDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.Random;

@@ -11,17 +11,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.lyos.FirebaseHandlers.PlaylistHandler;
-import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.FirebaseHandlers.UserHandler;
 import com.example.lyos.Interfaces.OnSelectionChangedListener;
-import com.example.lyos.MainActivity;
-import com.example.lyos.Models.Playlist;
-import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.R;
@@ -31,7 +25,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 public class TracksSelectionRecycleViewAdapter extends RecyclerView.Adapter<TracksSelectionRecycleViewAdapter.MyViewHolder>{
     private Context context;

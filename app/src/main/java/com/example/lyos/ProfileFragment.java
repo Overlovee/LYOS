@@ -361,7 +361,17 @@ public class ProfileFragment extends Fragment {
                 showSongAddingDialog(item);
             }
         });
-
+        dialogLayoutBinding.layoutSignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Kiểm tra xem context có phải là instance của MainActivity hay không
+                if (context instanceof MainActivity) {
+                    MainActivity mainActivity = (MainActivity) context;
+                    mainActivity.signOut();
+                    dialog.dismiss();
+                }
+            }
+        });
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));

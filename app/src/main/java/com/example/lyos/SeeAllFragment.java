@@ -19,7 +19,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.LinearLayout;
 
 import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.SongHandler;

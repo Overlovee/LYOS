@@ -12,8 +12,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -21,22 +19,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
-import com.bumptech.glide.Glide;
 import com.example.lyos.CustomAdapters.PlaylistRecycleViewAdapter;
 import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.PlaylistHandler;
-import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.Models.Playlist;
 import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
 import com.example.lyos.databinding.FragmentPlaylistsBinding;
-import com.example.lyos.databinding.OtherSongOptionsBottomSheetDialogLayoutBinding;
 import com.example.lyos.databinding.PlaylistAddingDialogLayoutBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 

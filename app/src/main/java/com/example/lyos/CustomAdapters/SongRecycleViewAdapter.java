@@ -1,9 +1,7 @@
 package com.example.lyos.CustomAdapters;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
@@ -12,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,7 +18,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -33,11 +29,9 @@ import com.example.lyos.Models.Playlist;
 import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.Song;
 import com.example.lyos.Models.UserInfo;
-import com.example.lyos.ProfileFragment;
 import com.example.lyos.R;
 import com.example.lyos.databinding.AddingToPlaylistDialogLayoutBinding;
 import com.example.lyos.databinding.ConfirmDialogLayoutBinding;
-import com.example.lyos.databinding.GetAudioDialogLayoutBinding;
 import com.example.lyos.databinding.OtherSongOptionsBottomSheetDialogLayoutBinding;
 import com.example.lyos.databinding.PlaylistAddingDialogLayoutBinding;
 import com.example.lyos.databinding.SongEditingDialogLayoutBinding;

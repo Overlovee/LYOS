@@ -101,10 +101,6 @@ public class SearchOnYoutubeFragment extends Fragment {
         fetchDataFromApi(getContext());
     }
 
-//    private String nextPageToken = "";
-//    private int totalResults = 0;
-//    private int currentTotalResults = 0;
-//    private int resultsPerPage = 0;
     private String apiKey = "AIzaSyA3U_Em89z-aoNc4kPxWMmF4uDtCykRI5g";
     private String url = "";
     private int expectedTotalResults = 20;
@@ -129,13 +125,6 @@ public class SearchOnYoutubeFragment extends Fragment {
     void parseJsonData(String jsonString, Context context) {
         try {
             JSONObject response = new JSONObject(jsonString);
-//            nextPageToken = response.optString("nextPageToken", "");
-//            JSONObject pageInfo = response.optJSONObject("pageInfo");
-//            if (pageInfo != null) {
-//                totalResults = pageInfo.optInt("totalResults", 0);
-//                resultsPerPage = pageInfo.optInt("resultsPerPage", 0);
-//            }
-//            currentTotalResults += resultsPerPage;
             JSONArray items = response.optJSONArray("items");
             if (items != null) {
                 for (int i = 0; i < items.length(); i++) {
@@ -155,17 +144,6 @@ public class SearchOnYoutubeFragment extends Fragment {
                         arrayList.add(youtubeVideo);
                     }
                 }
-//                if (currentTotalResults < expectedTotalResults) {
-//                    adapter = new SongRecycleViewAdapter(context, arrayList);
-//                    fragmentSearchOnYoutubeBinding.recycleViewItems.setAdapter(adapter);
-//                    fragmentSearchOnYoutubeBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
-//                    RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(context);
-//                    fragmentSearchOnYoutubeBinding.recycleViewItems.setLayoutManager(mLayoutManager);
-//                    fragmentSearchOnYoutubeBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
-//                }
-//                else {
-//                    adapter.notifyDataSetChanged();
-//                }
                 adapter = new YoutubeVideoRecycleViewAdapter(context, arrayList);
                 fragmentSearchOnYoutubeBinding.recycleViewItems.setAdapter(adapter);
                 fragmentSearchOnYoutubeBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
