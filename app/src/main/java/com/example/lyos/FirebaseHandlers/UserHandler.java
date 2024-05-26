@@ -7,6 +7,7 @@ import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -57,21 +58,24 @@ public class UserHandler {
         });
     }
 
-    public void add(UserInfo item) {
-
+    public Task<Void> add(UserInfo item) {
+        TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+        item.setNormalizedUsername(normalizeString(item.getUsername()));
         collection.add(item)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
-//                        Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                        taskCompletionSource.setResult(null); // Đánh dấu Task là thành công
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        e.printStackTrace();
+                        taskCompletionSource.setException(e); // Đánh dấu Task là thất bại và truyền ngoại lệ
                     }
                 });
+
+        return taskCompletionSource.getTask();
     }
     public Task<ArrayList<UserInfo>> search(String searchString) {
         return search(searchString, 30);
@@ -120,6 +124,24 @@ public class UserHandler {
             }
         });
     }
+    public Task<UserInfo> getUserByEmail(String email) {
+        return collection.whereEqualTo("email", email)
+                .get()
+                .continueWith(new Continuation<QuerySnapshot, UserInfo>() {
+                    @Override
+                    public UserInfo then(@NonNull Task<QuerySnapshot> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                UserInfo item = document.toObject(UserInfo.class);
+                                item.setId(document.getId());
+                                return item;
+                            }
+                        }
+                        return null; // No user found with the given email
+                    }
+                });
+    }
+
     private String normalizeString(String input) {
         // Remove non-alphanumeric characters and convert to lowercase
         return input.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();

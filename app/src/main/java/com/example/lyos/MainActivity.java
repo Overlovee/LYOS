@@ -49,6 +49,10 @@ import com.example.lyos.Models.UserInfo;
 import com.example.lyos.databinding.ActivityMainBinding;
 import com.example.lyos.databinding.CurrentlyPlayingListBottomSheetDialogLayoutBinding;
 import com.example.lyos.databinding.CurrentlyPlayingSongDialogLayoutBinding;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -71,9 +75,11 @@ import at.huber.youtubeExtractor.YtFile;
 public class MainActivity extends AppCompatActivity {
     private static final String ACCOUNT_TYPE = "com.example.lyos.account";
     private ActivityMainBinding activityMainBinding;
-    private String account = "Ykd4dpxIKqjqpsAupw2J";
+    private String account = "";
     private UserInfo user;
     SongHandler songHandler;
+    private GoogleSignInOptions googleSignInOptions;
+    private GoogleSignInClient googleSignInClient;
     public void setAccount(String id){
         this.account = id;
         AccountUtils.saveAccount(MainActivity.this, account);
@@ -84,13 +90,48 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         activityMainBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(activityMainBinding.getRoot());
-        songHandler = new SongHandler();
-        activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
 
         Intent intent = new Intent(MainActivity.this, SplashActivity.class);
         startActivity(intent);
 
+        googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().build();
+        googleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions);
+
+        GoogleSignInAccount acc = GoogleSignIn.getLastSignedInAccount(this);
+        if(acc != null){
+            UserHandler userHandler = new UserHandler();
+            userHandler.getUserByEmail(acc.getEmail()).addOnCompleteListener(new OnCompleteListener<UserInfo>() {
+                @Override
+                public void onComplete(@NonNull Task<UserInfo> task) {
+                    if (task.isSuccessful()) {
+                        user = task.getResult();
+                        if (user != null) {
+                            setAccount(user.getId());
+                        } else {
+                            Intent intent = new Intent(MainActivity.this, SetUpProfile.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                    } else {
+                        Exception e = task.getException();
+                        e.printStackTrace();
+                        Intent intent = new Intent(MainActivity.this, Login.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+            });
+        }
+        else {
+            intent = new Intent(MainActivity.this, Login.class);
+            startActivity(intent);
+            finish();
+        }
         //setAccount(account);
+
+        songHandler = new SongHandler();
+        activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
+
 
         // Kiểm tra xem có dữ liệu tài khoản đã được lưu trữ hay không
         ProfileDataLoader.loadProfileData(MainActivity.this, new ProfileDataLoader.OnProfileDataLoadedListener() {
@@ -900,12 +941,14 @@ public class MainActivity extends AppCompatActivity {
         handler.removeCallbacks(updateSeekBarRunnable);
     }
     private void clearPlaylist(){
-        stop();
-        player.clearMediaItems();
-        player.release();
-        player = null; // Set player to null to ensure it will be reinitialized later
-        currentSongArrayList.clear();
-        setVisibleLayoutNowPlaying(false);
+        if(player != null){
+            stop();
+            player.clearMediaItems();
+            player.release();
+            player = null; // Set player to null to ensure it will be reinitialized later
+            currentSongArrayList.clear();
+            setVisibleLayoutNowPlaying(false);
+        }
     }
     @SuppressLint("StaticFieldLeak")
     public void addToNextUp(Song item) {

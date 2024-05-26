@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/customDarkColor"
+    tools:context=".SetUpProfile">
+
+    <Button
+        android:id="@+id/buttonNext"
+        style="@style/Widget.AppCompat.Button.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20dp"
+        android:gravity="right"
+        android:enabled="false"
+        android:layout_gravity="right"
+        android:text="Next"/>
+    <TextView
+        android:layout_marginTop="40dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Type your name"
+        android:textColor="@color/customPrimaryColor"
+        android:textAlignment="center"
+        android:textSize="22dp"
+        />
+    <EditText
+        android:id="@+id/editTextUserName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="User name"
+        android:textColorHint="@color/customPrimaryColor"
+        android:textAlignment="center"
+        android:textColor="@color/customPrimaryColor"
+        android:textSize="20dp"
+        android:textStyle="bold" />
+</LinearLayout>

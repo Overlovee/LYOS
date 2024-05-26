@@ -12,7 +12,10 @@
 <!--    <style name="SongViewModeCustom" parent="Widget.AppCompat.ActionButton.Overflow">-->
 <!--        <item name="android:src">@drawable/categories</item>-->
 <!--    </style> -->
-
+    <style name="CustomButton" parent="Widget.AppCompat.Button">
+        <item name="android:backgroundTint">#FB005C</item>
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
     <style name="Theme.LYOS" parent="Base.Theme.LYOS" />
     <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
         <item name="android:textColor">#FFFFFF</item>
