@@ -507,7 +507,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
     @SuppressLint("StaticFieldLeak")
     public void setAudioNowPlaying(Song item) {
         initializePlayerListener();
@@ -1045,9 +1044,11 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-    private void hideToolbar(){
+    public void hideToolbar(){
         activityMainBinding.toolbar.setVisibility(View.GONE);
+    }
+    public void showToolbar(){
+        activityMainBinding.toolbar.setVisibility(View.VISIBLE);
     }
     public void openProfileFragment() {
         activityMainBinding.bottomNavigationMain.setSelectedItemId(R.id.navigation_profile);
@@ -1065,6 +1066,11 @@ public class MainActivity extends AppCompatActivity {
     public void openPlaylistDetailFragment(Playlist item) {
         hideToolbar();
         PlaylistDetailFragment fragment = new PlaylistDetailFragment(item);
+        loadFragment(fragment);
+    }
+    public void openSearchByTagFragment(String tag) {
+        hideToolbar();
+        SearchByTagFragment fragment = new SearchByTagFragment(tag);
         loadFragment(fragment);
     }
     public void openSeeAllFragment(String userID) {

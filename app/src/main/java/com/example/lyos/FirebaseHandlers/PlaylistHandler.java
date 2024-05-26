@@ -47,21 +47,17 @@ public class PlaylistHandler {
         });
     }
 
-    public void add(Playlist item) {
-        item.setNormalizedTitle(normalizeString(item.getTitle()));
-        collection.add(item)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-//                        Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        e.printStackTrace();
-                    }
-                });
+    public Task<Void> add(Playlist playlist) {
+        return collection.add(playlist).continueWithTask(new Continuation<DocumentReference, Task<Void>>() {
+            @Override
+            public Task<Void> then(@NonNull Task<DocumentReference> task) throws Exception {
+                if (task.isSuccessful()) {
+                    return Tasks.forResult(null);
+                } else {
+                    throw task.getException();
+                }
+            }
+        });
     }
     public Task<ArrayList<Playlist>> search(String searchString) {
         return search(searchString, LIMIT);

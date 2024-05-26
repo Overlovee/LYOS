@@ -183,7 +183,11 @@ public class DefaultSearchFragment extends Fragment {
 
             holder.itemView.setOnClickListener(v -> {
                 // Handle click event for the tag item
-
+                // Kiểm tra xem context có phải là instance của MainActivity hay không
+                if (context instanceof MainActivity) {
+                    MainActivity mainActivity = (MainActivity) context;
+                    mainActivity.openSearchByTagFragment(tag);
+                }
             });
         }
 

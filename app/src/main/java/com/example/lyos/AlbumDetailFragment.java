@@ -155,6 +155,23 @@ public class AlbumDetailFragment extends Fragment {
                         }
                         else {
                             fragmentAlbumDetailBinding.textViewFollowAction.setVisibility(View.VISIBLE);
+                            if(currentUserInfo.getFollowers() != null){
+                                if(currentUserInfo.getFollowers().contains(user.getId())){
+                                    fragmentAlbumDetailBinding.textViewFollowAction.setText("Following");
+                                    fragmentAlbumDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
+                                    fragmentAlbumDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
+                                }
+                                else {
+                                    fragmentAlbumDetailBinding.textViewFollowAction.setText("Follow");
+                                    fragmentAlbumDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
+                                    fragmentAlbumDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+                                }
+                            }
+                            else {
+                                fragmentAlbumDetailBinding.textViewFollowAction.setText("Follow");
+                                fragmentAlbumDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
+                                fragmentAlbumDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+                            }
                         }
 
                         fragmentAlbumDetailBinding.textViewUserName.setText(currentUserInfo.getUsername());
@@ -222,6 +239,7 @@ public class AlbumDetailFragment extends Fragment {
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
                     mainActivity.playNewPlaylist(arrayList);
+                    getActivity().getSupportFragmentManager().popBackStack();
                 }
             }
         });
@@ -232,6 +250,7 @@ public class AlbumDetailFragment extends Fragment {
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
                     mainActivity.playNewPlaylist(arrayList);
+                    getActivity().getSupportFragmentManager().popBackStack();
                 }
             }
         });
@@ -252,11 +271,17 @@ public class AlbumDetailFragment extends Fragment {
                     if(currentUserInfo.getFollowers() == null){
                         currentUserInfo.setFollowers(new ArrayList<>());
                     }
-                    currentUserInfo.getFollowers().remove(user.getId());
-                    userHandler.update(currentUserInfo.getId(), currentUserInfo);
-                    fragmentAlbumDetailBinding.textViewFollowAction.setText("Follow");
-                    fragmentAlbumDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
-                    fragmentAlbumDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+                    else {
+                        if (currentUserInfo.getFollowers().size() > 0) {
+                            if (currentUserInfo.getFollowers().contains(user.getId())) {
+                                currentUserInfo.getFollowers().remove(user.getId());
+                                userHandler.update(currentUserInfo.getId(), currentUserInfo);
+                                fragmentAlbumDetailBinding.textViewFollowAction.setText("Follow");
+                                fragmentAlbumDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
+                                fragmentAlbumDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+                            }
+                        }
+                    }
                 }
             }
         });

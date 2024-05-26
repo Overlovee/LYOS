@@ -13,7 +13,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.lyos.FirebaseHandlers.SongHandler;
+import com.example.lyos.FirebaseHandlers.UserHandler;
 import com.example.lyos.MainActivity;
 import com.example.lyos.Models.ProfileDataLoader;
 import com.example.lyos.Models.UserInfo;
@@ -52,11 +52,13 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
         return new MyViewHolder(itemView);
     }
 
+    private UserInfo currentUserInfo;
     private UserInfo user;
     FragmentActivity fragmentActivity;
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
         UserInfo item = list.get(position);
+        currentUserInfo = item;
         if (context instanceof FragmentActivity) {
             fragmentActivity = (FragmentActivity) context;
         }
@@ -83,17 +85,59 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
         }).addOnFailureListener(exception -> {
             // Handle any errors
         });
+        if(user != null){
+            if(currentUserInfo.getId().equals(user.getId())){
+                holder.textViewFollowAction.setVisibility(View.GONE);
+            }
+            else {
+                holder.textViewFollowAction.setVisibility(View.VISIBLE);
+                if(currentUserInfo.getFollowers() != null){
+                    if(currentUserInfo.getFollowers().contains(user.getId())){
+                        holder.textViewFollowAction.setText("Following");
+                        holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
+                        holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
+                    }
+                    else {
+                        holder.textViewFollowAction.setText("Follow");
+                        holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
+                        holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+                    }
+                }
+                else {
+                    holder.textViewFollowAction.setText("Follow");
+                    holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
+                    holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+                }
+            }
+        }
         holder.textViewFollowAction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                UserHandler userHandler = new UserHandler();
                 if (holder.textViewFollowAction.getText().equals("Follow")) {
+                    if(currentUserInfo.getFollowers() == null){
+                        currentUserInfo.setFollowers(new ArrayList<>());
+                    }
+                    currentUserInfo.getFollowers().add(user.getId());
+                    userHandler.update(currentUserInfo.getId(), currentUserInfo);
                     holder.textViewFollowAction.setText("Following");
                     holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
                     holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
                 } else {
-                    holder.textViewFollowAction.setText("Follow");
-                    holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
-                    holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+                    if(currentUserInfo.getFollowers() == null){
+                        currentUserInfo.setFollowers(new ArrayList<>());
+                    }
+                    else {
+                        if (currentUserInfo.getFollowers().size() > 0) {
+                            if (currentUserInfo.getFollowers().contains(user.getId())) {
+                                currentUserInfo.getFollowers().remove(user.getId());
+                                userHandler.update(currentUserInfo.getId(), currentUserInfo);
+                                holder.textViewFollowAction.setText("Follow");
+                                holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
+                                holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -103,7 +147,7 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
                 // Kiểm tra xem context có phải là instance của MainActivity hay không
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
-                    if(item.getId().equals(user.getId())){
+                    if(item.getId().equals(currentUserInfo.getId())){
                         mainActivity.openProfileFragment();
                     }
                     else {

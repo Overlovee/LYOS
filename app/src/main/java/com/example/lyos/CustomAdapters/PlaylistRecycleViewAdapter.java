@@ -156,7 +156,6 @@ public class PlaylistRecycleViewAdapter extends RecyclerView.Adapter<PlaylistRec
                 }
             }
         });
-
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

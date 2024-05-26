@@ -180,7 +180,16 @@ public class PlaylistsFragment extends Fragment {
                     newPlaylist.setTitle(title);
                     newPlaylist.setUserID(user.getId());
                     PlaylistHandler playlistHandler = new PlaylistHandler();
-                    playlistHandler.add(newPlaylist);
+                    playlistHandler.add(newPlaylist).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                getPlaylistsDataFromFirestore();
+                            } else {
+
+                            }
+                        }
+                    });
                 }
                 dialog.dismiss();
             }

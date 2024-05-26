@@ -225,6 +225,7 @@ public class AlbumRecycleViewAdapter extends RecyclerView.Adapter<AlbumRecycleVi
         dialogLayoutBinding.layoutLike.setVisibility(View.GONE);
         dialogLayoutBinding.layoutDelete.setVisibility(View.GONE);
         dialogLayoutBinding.layoutUpdate.setVisibility(View.GONE);
+        dialogLayoutBinding.layoutAddToPlaylist.setVisibility(View.GONE);
 
         dialog.show();
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);

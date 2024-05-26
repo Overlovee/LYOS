@@ -111,9 +111,11 @@ public class SeeAllFragment extends Fragment {
         context = getContext();
         arrayList = new ArrayList<>();
         if(!userID.isEmpty()){
+            fragmentSeeAllBinding.textViewHeader.setText("Tracks");
             getUserTracksDataFromFirestore(userID);
         } else if (likeArrayList != null) {
             if (!likeArrayList.isEmpty()){
+                fragmentSeeAllBinding.textViewHeader.setText("Likes");
                 getLikesDataFromFirestore(likeArrayList);
             }
             else {

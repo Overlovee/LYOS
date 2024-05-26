@@ -109,7 +109,12 @@ public class SongHandler {
                     for (QueryDocumentSnapshot document : task.getResult()) {
                         Song song = document.toObject(Song.class);
                         if (song != null && song.getTag() != null) {
-                            uniqueTagsSet.add(song.getTag());
+                            String[] tags = song.getTag().split("\\s*#\\s*");
+                            for (String tag : tags) {
+                                if (!tag.trim().isEmpty()) {
+                                    uniqueTagsSet.add("#" + tag.trim());
+                                }
+                            }
                         }
                     }
                 }
@@ -118,6 +123,7 @@ public class SongHandler {
             }
         });
     }
+
     public Task<Song> getInfoByID(String id) {
         DocumentReference docRef = collection.document(id);
         return docRef.get().continueWith(new Continuation<DocumentSnapshot, Song>() {
@@ -241,6 +247,29 @@ public class SongHandler {
             }
         });
     }
+    public Task<ArrayList<Song>> searchByTag(String tag) {
+        ArrayList<Song> list = new ArrayList<>();
+        String normalizedTag = normalizeString(tag);
+        return collection
+                .whereLessThanOrEqualTo("tag", normalizedTag)
+                .get()
+                .continueWith(new Continuation<QuerySnapshot, ArrayList<Song>>() {
+                    @Override
+                    public ArrayList<Song> then(@NonNull Task<QuerySnapshot> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Song item = document.toObject(Song.class);
+                                if (item != null) {
+                                    item.setId(document.getId());
+                                    list.add(item);
+                                }
+                            }
+                        }
+                        return list;
+                    }
+                });
+    }
+
     private String normalizeString(String input) {
         // Remove non-alphanumeric characters and convert to lowercase
         return input.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
@@ -249,6 +278,7 @@ public class SongHandler {
     public Task<Void> addSong(Song item) {
         item.setId(null);
         item.setNormalizedTitle(normalizeString(item.getTitle()));
+        item.setTag(normalizeString(item.getTag()));
         item.setUploadDate(new Date());
         return collection.add(item)
                 .continueWithTask(new Continuation<DocumentReference, Task<Void>>() {

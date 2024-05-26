@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/customDarkColor"
+    android:paddingTop="15dp"
+    android:paddingHorizontal="10dp"
+    tools:context=".SearchByTagFragment">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="19dp">
+        <ImageView
+            android:id="@+id/buttonBack"
+            android:padding="10dp"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="#616161"
+            android:scaleType="centerCrop"
+            android:src="@drawable/back"/>
+    </androidx.cardview.widget.CardView>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:background="#8A8A8A" />
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycleViewItems"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</LinearLayout>

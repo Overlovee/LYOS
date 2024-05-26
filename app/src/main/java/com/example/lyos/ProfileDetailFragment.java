@@ -136,8 +136,19 @@ public class ProfileDetailFragment extends Fragment {
     private void setUpUI(){
         fragmentProfileDetailBinding.textViewUserName.setText(currentUserInfo.getUsername());
         fragmentProfileDetailBinding.textViewHeaderUserName.setText(currentUserInfo.getUsername());
-        fragmentProfileDetailBinding.textViewFollowers.setText(String.valueOf(currentUserInfo.getFollowers().size()) + " Followers");
-        fragmentProfileDetailBinding.textViewFollowing.setText(String.valueOf(currentUserInfo.getFollowing().size()) + " Following");
+        if(currentUserInfo.getFollowers() == null){
+            fragmentProfileDetailBinding.textViewFollowers.setText("0 Followers");
+        }
+        else {
+            fragmentProfileDetailBinding.textViewFollowers.setText(String.valueOf(currentUserInfo.getFollowers().size()) + " Followers");
+        }
+        if(currentUserInfo.getFollowing() == null){
+            fragmentProfileDetailBinding.textViewFollowing.setText("0 Following");
+        }
+        else {
+            fragmentProfileDetailBinding.textViewFollowing.setText(String.valueOf(currentUserInfo.getFollowing().size()) + " Following");
+        }
+
 
         String imagePath = "user_images/" + currentUserInfo.getProfilePhoto();
         StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);

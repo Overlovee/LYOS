@@ -77,6 +77,26 @@ public class YoutubeVideoRecycleViewAdapter extends RecyclerView.Adapter<Youtube
                 showDialog(item);
             }
         });
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Tạo URI với ID video YouTube
+                Uri youtubeUri = Uri.parse("https://www.youtube.com/watch?v=" + item.getVideoId());
+
+                // Tạo Intent để mở ứng dụng YouTube với URI đã tạo
+                Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, youtubeUri);
+
+                // Kiểm tra xem có ứng dụng YouTube được cài đặt trên thiết bị không
+                if (youtubeIntent.resolveActivity(context.getPackageManager()) != null) {
+                    // Mở ứng dụng YouTube
+                    context.startActivity(youtubeIntent);
+                } else {
+                    // Nếu không có ứng dụng YouTube, mở trình duyệt web và chuyển hướng đến video YouTube
+                    Intent webIntent = new Intent(Intent.ACTION_VIEW, youtubeUri);
+                    context.startActivity(webIntent);
+                }
+            }
+        });
     }
     private YoutubeOptionsBottomSheetDialogLayoutBinding dialogLayoutBinding;
     private void showDialog(YoutubeVideo item) {
@@ -110,6 +130,7 @@ public class YoutubeVideoRecycleViewAdapter extends RecyclerView.Adapter<Youtube
                 dialog.dismiss();
             }
         });
+        dialogLayoutBinding.layoutAddToNextUp.setVisibility(View.GONE);
         dialogLayoutBinding.layoutGoToYoutube.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
