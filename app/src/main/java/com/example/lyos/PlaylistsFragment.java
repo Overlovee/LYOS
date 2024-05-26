@@ -128,17 +128,28 @@ public class PlaylistsFragment extends Fragment {
             public void onComplete(@NonNull Task<ArrayList<Playlist>> task) {
                 if (task.isSuccessful()) {
                     playlistArrayList = task.getResult();
-                    playlistAdapter = new PlaylistRecycleViewAdapter(context, playlistArrayList);
+                    if(playlistArrayList != null){
+                        if(playlistArrayList.size() > 0){
+                            playlistAdapter = new PlaylistRecycleViewAdapter(context, playlistArrayList);
 
-                    fragmentPlaylistsBinding.textViewZero.setVisibility(View.GONE);
-                    fragmentPlaylistsBinding.recycleViewItems.setVisibility(View.VISIBLE);
+                            fragmentPlaylistsBinding.textViewZero.setVisibility(View.GONE);
+                            fragmentPlaylistsBinding.recycleViewItems.setVisibility(View.VISIBLE);
 
-                    fragmentPlaylistsBinding.recycleViewItems.setAdapter(playlistAdapter);
-                    fragmentPlaylistsBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
-                    GridLayoutManager mLayoutManager = new GridLayoutManager(context, 2);
-                    fragmentPlaylistsBinding.recycleViewItems.setLayoutManager(mLayoutManager);
-                    fragmentPlaylistsBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
-
+                            fragmentPlaylistsBinding.recycleViewItems.setAdapter(playlistAdapter);
+                            fragmentPlaylistsBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
+                            GridLayoutManager mLayoutManager = new GridLayoutManager(context, 2);
+                            fragmentPlaylistsBinding.recycleViewItems.setLayoutManager(mLayoutManager);
+                            fragmentPlaylistsBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
+                        } else {
+                            //and more action --.--
+                            fragmentPlaylistsBinding.textViewZero.setVisibility(View.VISIBLE);
+                            fragmentPlaylistsBinding.recycleViewItems.setVisibility(View.GONE);
+                        }
+                    } else {
+                        //and more action --.--
+                        fragmentPlaylistsBinding.textViewZero.setVisibility(View.VISIBLE);
+                        fragmentPlaylistsBinding.recycleViewItems.setVisibility(View.GONE);
+                    }
                 } else {
                     //and more action --.--
                     fragmentPlaylistsBinding.textViewZero.setVisibility(View.VISIBLE);

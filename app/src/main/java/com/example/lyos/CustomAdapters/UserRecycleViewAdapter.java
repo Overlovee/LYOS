@@ -67,6 +67,7 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
             @Override
             public void onProfileDataLoaded(UserInfo u) {
                 user = u;
+                setUpUI(holder, item);
             }
             @Override
             public void onProfileDataLoadFailed() {
@@ -74,9 +75,16 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
             }
         });
 
-
+    }
+    public void setUpUI(UserRecycleViewAdapter.MyViewHolder holder, UserInfo item){
         holder.textViewTitle.setText(item.getUsername());
-        holder.textViewFollowers.setText(String.valueOf(item.getFollowers().size()) + " Followers");
+        if(item.getFollowers() == null){
+            holder.textViewFollowers.setText("0 Followers");
+        }
+        else {
+            holder.textViewFollowers.setText(String.valueOf(item.getFollowers().size()) + " Followers");
+        }
+
         // Load image using Glide library
         String imagePath = "user_images/" + item.getProfilePhoto();
         StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
@@ -86,13 +94,13 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
             // Handle any errors
         });
         if(user != null){
-            if(currentUserInfo.getId().equals(user.getId())){
+            if(item.getId().equals(user.getId())){
                 holder.textViewFollowAction.setVisibility(View.GONE);
             }
             else {
                 holder.textViewFollowAction.setVisibility(View.VISIBLE);
-                if(currentUserInfo.getFollowers() != null){
-                    if(currentUserInfo.getFollowers().contains(user.getId())){
+                if(item.getFollowers() != null){
+                    if(item.getFollowers().contains(user.getId())){
                         holder.textViewFollowAction.setText("Following");
                         holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
                         holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
@@ -115,23 +123,23 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
             public void onClick(View v) {
                 UserHandler userHandler = new UserHandler();
                 if (holder.textViewFollowAction.getText().equals("Follow")) {
-                    if(currentUserInfo.getFollowers() == null){
-                        currentUserInfo.setFollowers(new ArrayList<>());
+                    if(item.getFollowers() == null){
+                        item.setFollowers(new ArrayList<>());
                     }
-                    currentUserInfo.getFollowers().add(user.getId());
-                    userHandler.update(currentUserInfo.getId(), currentUserInfo);
+                    item.getFollowers().add(user.getId());
+                    userHandler.update(item.getId(), item);
                     holder.textViewFollowAction.setText("Following");
                     holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
                     holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
                 } else {
-                    if(currentUserInfo.getFollowers() == null){
-                        currentUserInfo.setFollowers(new ArrayList<>());
+                    if(item.getFollowers() == null){
+                        item.setFollowers(new ArrayList<>());
                     }
                     else {
-                        if (currentUserInfo.getFollowers().size() > 0) {
-                            if (currentUserInfo.getFollowers().contains(user.getId())) {
-                                currentUserInfo.getFollowers().remove(user.getId());
-                                userHandler.update(currentUserInfo.getId(), currentUserInfo);
+                        if (item.getFollowers().size() > 0) {
+                            if (item.getFollowers().contains(user.getId())) {
+                                item.getFollowers().remove(user.getId());
+                                userHandler.update(item.getId(), item);
                                 holder.textViewFollowAction.setText("Follow");
                                 holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
                                 holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
@@ -147,7 +155,7 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
                 // Kiểm tra xem context có phải là instance của MainActivity hay không
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
-                    if(item.getId().equals(currentUserInfo.getId())){
+                    if(item.getId().equals(user.getId())){
                         mainActivity.openProfileFragment();
                     }
                     else {

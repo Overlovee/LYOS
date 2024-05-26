@@ -249,7 +249,7 @@ public class AlbumDetailFragment extends Fragment {
                 // Kiểm tra xem context có phải là instance của MainActivity hay không
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
-                    mainActivity.playNewPlaylist(arrayList);
+                    mainActivity.playPlaylistWithRandomSongs(arrayList);
                     getActivity().getSupportFragmentManager().popBackStack();
                 }
             }

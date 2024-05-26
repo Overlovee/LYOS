@@ -144,15 +144,26 @@ public class AlbumsFragment extends Fragment{
             public void onComplete(@NonNull Task<ArrayList<Album>> task) {
                 if (task.isSuccessful()) {
                     albumArrayList = task.getResult();
-                    albumAdapter = new AlbumRecycleViewAdapter(context, albumArrayList);
-                    fragmentAlbumsBinding.textViewZero.setVisibility(View.GONE);
-                    fragmentAlbumsBinding.recycleViewItems.setVisibility(View.VISIBLE);
-                    fragmentAlbumsBinding.recycleViewItems.setAdapter(albumAdapter);
-                    fragmentAlbumsBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
-                    RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(context);
-                    fragmentAlbumsBinding.recycleViewItems.setLayoutManager(mLayoutManager);
-                    fragmentAlbumsBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
-
+                    if(albumArrayList != null){
+                        if(albumArrayList.size() > 0){
+                            albumAdapter = new AlbumRecycleViewAdapter(context, albumArrayList);
+                            fragmentAlbumsBinding.textViewZero.setVisibility(View.GONE);
+                            fragmentAlbumsBinding.recycleViewItems.setVisibility(View.VISIBLE);
+                            fragmentAlbumsBinding.recycleViewItems.setAdapter(albumAdapter);
+                            fragmentAlbumsBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
+                            RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(context);
+                            fragmentAlbumsBinding.recycleViewItems.setLayoutManager(mLayoutManager);
+                            fragmentAlbumsBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
+                        }
+                        else {
+                            fragmentAlbumsBinding.textViewZero.setVisibility(View.VISIBLE);
+                            fragmentAlbumsBinding.recycleViewItems.setVisibility(View.GONE);
+                        }
+                    }
+                    else {
+                        fragmentAlbumsBinding.textViewZero.setVisibility(View.VISIBLE);
+                        fragmentAlbumsBinding.recycleViewItems.setVisibility(View.GONE);
+                    }
                 } else {
                     //and more action --.--
                     fragmentAlbumsBinding.textViewZero.setVisibility(View.VISIBLE);

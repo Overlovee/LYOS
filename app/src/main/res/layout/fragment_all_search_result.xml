@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/customDarkColor"
     android:paddingHorizontal="10dp"
     android:paddingVertical="20dp"
-    android:orientation="vertical"
     tools:context=".AllSearchResultFragment">
 
     <LinearLayout
@@ -98,4 +97,4 @@
         </LinearLayout>
     </LinearLayout>
 
-</LinearLayout>
+</ScrollView>

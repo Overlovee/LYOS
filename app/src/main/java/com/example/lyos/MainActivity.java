@@ -246,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Nếu đang ở bài hát cuối cùng, chuyển đến bài hát đầu tiên
                 if (currentIndex == lastIndex) {
-                    player.seekToDefaultPosition();
+                    player.seekTo(0, 0);
                 } else {
                     player.next();
                 }
@@ -396,6 +396,13 @@ public class MainActivity extends AppCompatActivity {
                 userSeeking = false;
             }
         });
+        currentlyPlayingSongDialogLayoutBinding.buttonRandomPlayingList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ArrayList<Song> temp = currentSongArrayList;
+                playPlaylistWithRandomSongs(temp);
+            }
+        });
         currentlyPlayingSongDialogLayoutBinding.buttonRepeatPlayingList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -425,7 +432,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Nếu đang ở bài hát cuối cùng, chuyển đến bài hát đầu tiên
                 if (currentIndex == lastIndex) {
-                    player.seekToDefaultPosition();
+                    player.seekTo(0, 0);
                 } else {
                     player.next();
                 }
@@ -486,6 +493,18 @@ public class MainActivity extends AppCompatActivity {
         currentlyPlayingListDialogLayoutBinding.recycleViewItems.setLayoutManager(mLayoutManager);
         currentlyPlayingListDialogLayoutBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
 
+        currentlyPlayingListDialogLayoutBinding.buttonRandomPlayingList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playPlaylistWithRandomSongs(currentSongArrayList);
+                SongRecycleViewAdapter adapter = new SongRecycleViewAdapter(MainActivity.this, currentSongArrayList);
+                currentlyPlayingListDialogLayoutBinding.recycleViewItems.setAdapter(adapter);
+                currentlyPlayingListDialogLayoutBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(MainActivity.this ,DividerItemDecoration.VERTICAL));
+                RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(MainActivity.this);
+                currentlyPlayingListDialogLayoutBinding.recycleViewItems.setLayoutManager(mLayoutManager);
+                currentlyPlayingListDialogLayoutBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
+            }
+        });
         currentlyPlayingListDialogLayoutBinding.buttonBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -563,7 +582,8 @@ public class MainActivity extends AppCompatActivity {
                 // Chuẩn bị player và phát ngay bài hát vừa thêm vào
                 player.setRepeatMode(Player.REPEAT_MODE_ALL);
                 player.prepare();
-                player.seekTo(0, C.TIME_UNSET); // Nhảy đến bài hát mới nhất
+                int lastIndex = player.getMediaItemCount() - 1;
+                player.seekTo(lastIndex, 0);
                 // Hiển thị layout Now Playing nếu chưa hiển thị
                 setVisibleLayoutNowPlaying(true);
                 play();
@@ -722,6 +742,11 @@ public class MainActivity extends AppCompatActivity {
             // Handle any errors
             Log.e("playNewPlaylist", "Failed to get download URLs", exception);
         });
+    }
+    public void playPlaylistWithRandomSongs(ArrayList<Song> songArrayList){
+        ArrayList<Song> shuffledList = new ArrayList<>(songArrayList);
+        Collections.shuffle(shuffledList);
+        playNewPlaylist(shuffledList);
     }
     private void updateNowPlayingUI(Song song) {
         if(song.getType().equals("system")){
