@@ -32,7 +32,7 @@ public class Song {
         this.uploadDate = new Date();
         this.userID = "";
         this.normalizedTitle = "";
-        this.type = "";
+        this.type = "system";
     }
 
     public Song(String title, String mp3FileName, String imageFileName, String description,

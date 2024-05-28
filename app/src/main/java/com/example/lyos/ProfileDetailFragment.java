@@ -106,6 +106,25 @@ public class ProfileDetailFragment extends Fragment {
             @Override
             public void onProfileDataLoaded(UserInfo u) {
                 user = u;
+                if(currentUserInfo != null){
+                    setUpUI();
+                    addEvents();
+                    if(currentUserInfo.getLikes().size() > 0){
+                        fragmentProfileDetailBinding.textViewZeroLikes.setVisibility(View.GONE);
+                        fragmentProfileDetailBinding.recycleViewLikeItems.setVisibility(View.VISIBLE);
+                        fragmentProfileDetailBinding.textViewSeeAllLikesAction.setVisibility(View.VISIBLE);
+                        getLikesDataFromFirestore();
+                    } else {
+                        fragmentProfileDetailBinding.textViewZeroLikes.setVisibility(View.VISIBLE);
+                        fragmentProfileDetailBinding.recycleViewLikeItems.setVisibility(View.GONE);
+                        fragmentProfileDetailBinding.textViewSeeAllLikesAction.setVisibility(View.GONE);
+
+                    }
+                    getUserTracksDataFromFirestore();
+                } else{
+                    // Finish the activity if user is null
+                    getActivity().getSupportFragmentManager().popBackStack();
+                }
             }
 
             @Override
@@ -113,25 +132,6 @@ public class ProfileDetailFragment extends Fragment {
 
             }
         });
-        if(currentUserInfo != null){
-            setUpUI();
-            addEvents();
-            if(currentUserInfo.getLikes().size() > 0){
-                fragmentProfileDetailBinding.textViewZeroLikes.setVisibility(View.GONE);
-                fragmentProfileDetailBinding.recycleViewLikeItems.setVisibility(View.VISIBLE);
-                fragmentProfileDetailBinding.textViewSeeAllLikesAction.setVisibility(View.VISIBLE);
-                getLikesDataFromFirestore();
-            } else {
-                fragmentProfileDetailBinding.textViewZeroLikes.setVisibility(View.VISIBLE);
-                fragmentProfileDetailBinding.recycleViewLikeItems.setVisibility(View.GONE);
-                fragmentProfileDetailBinding.textViewSeeAllLikesAction.setVisibility(View.GONE);
-
-            }
-            getUserTracksDataFromFirestore();
-        } else{
-            // Finish the activity if user is null
-            getActivity().getSupportFragmentManager().popBackStack();
-        }
     }
     private void setUpUI(){
         fragmentProfileDetailBinding.textViewUserName.setText(currentUserInfo.getUsername());
@@ -165,6 +165,25 @@ public class ProfileDetailFragment extends Fragment {
         }).addOnFailureListener(exception -> {
             // Handle any errors
         });
+
+        if(currentUserInfo.getFollowers() != null){
+            if(currentUserInfo.getFollowers().contains(user.getId())){
+                fragmentProfileDetailBinding.textViewFollowAction.setText("Following");
+                fragmentProfileDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
+                fragmentProfileDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
+            }
+            else {
+                fragmentProfileDetailBinding.textViewFollowAction.setText("Follow");
+                fragmentProfileDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
+                fragmentProfileDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+            }
+        }
+        else {
+            fragmentProfileDetailBinding.textViewFollowAction.setText("Follow");
+            fragmentProfileDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
+            fragmentProfileDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);
+        }
+
         fragmentProfileDetailBinding.textViewFollowAction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -174,7 +193,10 @@ public class ProfileDetailFragment extends Fragment {
                         currentUserInfo.setFollowers(new ArrayList<>());
                     }
                     currentUserInfo.getFollowers().add(user.getId());
+                    user.getFollowing().add(currentUserInfo.getId());
+                    fragmentProfileDetailBinding.textViewFollowers.setText(String.valueOf(currentUserInfo.getFollowers().size()) + " Followers");
                     userHandler.update(currentUserInfo.getId(), currentUserInfo);
+                    userHandler.update(user.getId(), user);
                     fragmentProfileDetailBinding.textViewFollowAction.setText("Following");
                     fragmentProfileDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
                     fragmentProfileDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
@@ -183,7 +205,10 @@ public class ProfileDetailFragment extends Fragment {
                         currentUserInfo.setFollowers(new ArrayList<>());
                     }
                     currentUserInfo.getFollowers().remove(user.getId());
+                    user.getFollowing().remove(currentUserInfo.getId());
+                    fragmentProfileDetailBinding.textViewFollowers.setText(String.valueOf(currentUserInfo.getFollowers().size()) + " Followers");
                     userHandler.update(currentUserInfo.getId(), currentUserInfo);
+                    userHandler.update(user.getId(), user);
                     fragmentProfileDetailBinding.textViewFollowAction.setText("Follow");
                     fragmentProfileDetailBinding.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
                     fragmentProfileDetailBinding.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);

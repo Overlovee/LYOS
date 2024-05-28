@@ -127,7 +127,10 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
                         item.setFollowers(new ArrayList<>());
                     }
                     item.getFollowers().add(user.getId());
+                    user.getFollowing().add(item.getId());
+                    holder.textViewFollowers.setText(String.valueOf(item.getFollowers().size()) + " Followers");
                     userHandler.update(item.getId(), item);
+                    userHandler.update(user.getId(), user);
                     holder.textViewFollowAction.setText("Following");
                     holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customPrimaryColor));
                     holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_clicked_button_view);
@@ -139,7 +142,10 @@ public class UserRecycleViewAdapter extends RecyclerView.Adapter<UserRecycleView
                         if (item.getFollowers().size() > 0) {
                             if (item.getFollowers().contains(user.getId())) {
                                 item.getFollowers().remove(user.getId());
+                                user.getFollowing().remove(item.getId());
+                                holder.textViewFollowers.setText(String.valueOf(item.getFollowers().size()) + " Followers");
                                 userHandler.update(item.getId(), item);
+                                userHandler.update(user.getId(), user);
                                 holder.textViewFollowAction.setText("Follow");
                                 holder.textViewFollowAction.setTextColor(ContextCompat.getColor(context, R.color.customDarkColor));
                                 holder.textViewFollowAction.setBackgroundResource(R.drawable.rounded_button_view);

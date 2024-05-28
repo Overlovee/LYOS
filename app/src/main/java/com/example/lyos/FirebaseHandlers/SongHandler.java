@@ -276,7 +276,11 @@ public class SongHandler {
     public Task<Void> addSong(Song item) {
         item.setId(null);
         item.setNormalizedTitle(normalizeString(item.getTitle()));
-        item.setTag(normalizeString(item.getTag()));
+        if(!item.getTag().contains("#")){
+            item.setTag("#" + item.getTag());
+        }
+        item.setTag(item.getTag().trim());
+        item.setType("system");
         item.setUploadDate(new Date());
         return collection.add(item)
                 .continueWithTask(new Continuation<DocumentReference, Task<Void>>() {
