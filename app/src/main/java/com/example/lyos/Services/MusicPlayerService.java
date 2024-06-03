@@ -70,6 +70,7 @@ public class MusicPlayerService extends Service {
         RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.custom_notification_player_layout);
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         remoteViews.setOnClickPendingIntent(R.id.stopButtonPlayback, getPendingIntent(this, ACTION_PAUSE_OR_PLAY));
@@ -78,11 +79,15 @@ public class MusicPlayerService extends Service {
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.lyos)
+                .setContentIntent(pendingIntent)
                 .setCustomContentView(remoteViews)
-                .setStyle(new NotificationCompat.DecoratedCustomViewStyle()) // Sử dụng DecoratedCustomViewStyle
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)  // Hiển thị đầy đủ nội dung trên màn hình khóa
                 .setOngoing(true)
                 .build();
 
+        notification.flags |= Notification.FLAG_NO_CLEAR;
         startForeground(1, notification);
 
         return START_NOT_STICKY;
