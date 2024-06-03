@@ -936,13 +936,14 @@ public class ProfileFragment extends Fragment {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                             // Cập nhật URL của ảnh mới cho người dùng
-                            user.setProfilePhoto(newImageName);
+                            user.setProfileBanner(newImageName);
                             setUpUI();
                             UserHandler userHandler = new UserHandler();
                             userHandler.updateProfileBanner(user.getId(), newImageName).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
                                     if (task.isSuccessful()) {
+
                                         // Xóa ảnh cũ
                                         if (!currentImageName.isEmpty()) {
                                             StorageReference oldImageRef = FirebaseStorage.getInstance().getReference().child("user_banner_images/" + currentImageName);

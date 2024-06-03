@@ -168,4 +168,28 @@ public class AlbumHandler {
                     }
                 });
     }
+    public Task<Void> removeSongFromAllAlbums(String songId) {
+        return collection.whereArrayContains("songList", songId)
+                .get()
+                .continueWithTask(new Continuation<QuerySnapshot, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<QuerySnapshot> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            ArrayList<Task<Void>> tasks = new ArrayList<>();
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Album album = document.toObject(Album.class);
+                                if (album.getSongList() != null) {
+                                    if (album.getSongList().contains(songId)) {
+                                        album.getSongList().remove(songId);
+                                        tasks.add(collection.document(document.getId()).set(album));
+                                    }
+                                }
+                            }
+                            return Tasks.whenAll(tasks);
+                        } else {
+                            throw task.getException();
+                        }
+                    }
+                });
+    }
 }

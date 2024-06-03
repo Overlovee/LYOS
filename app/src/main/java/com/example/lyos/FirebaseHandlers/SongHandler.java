@@ -319,12 +319,20 @@ public class SongHandler {
                     @Override
                     public Task<Void> then(@NonNull Task<Void> task) throws Exception {
                         if (task.isSuccessful()) {
-                            return Tasks.forResult(null); // Thành công, trả về Task<Void> trống
+                            PlaylistHandler playlistHandler = new PlaylistHandler();
+                            Task<Void> removeFromPlaylistsTask = playlistHandler.removeSongFromAllPlaylists(id);
+
+                            AlbumHandler albumHandler = new AlbumHandler();
+                            Task<Void> removeFromAlbumsTask = albumHandler.removeSongFromAllAlbums(id);
+
+                            UserHandler userHandler = new UserHandler();
+                            Task<Void> removeFromUsersTask = userHandler.removeSongFromAllUsersFavorites(id);
+                            // Ensure both tasks complete successfully
+                            return Tasks.whenAll(removeFromPlaylistsTask, removeFromAlbumsTask);
                         } else {
-                            throw task.getException(); // Thất bại, ném ra ngoại lệ
+                            throw task.getException(); // Task failed, throw the exception
                         }
                     }
                 });
     }
-
 }

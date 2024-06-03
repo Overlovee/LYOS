@@ -8,6 +8,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -148,12 +149,52 @@ public class UserHandler {
     }
 
 
-    public void update(String id, UserInfo item) {
-        collection.document(id)
-                .set(item);
+    public Task<Void> update(String id, UserInfo item) {
+        return collection.document(id)
+                .set(item)
+                .continueWithTask(new Continuation<Void, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<Void> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            return Tasks.forResult(null); // Thành công, trả về Task<Void> trống
+                        } else {
+                            throw task.getException(); // Thất bại, ném ra ngoại lệ
+                        }
+                    }
+                });
     }
-    public void delete(String id) {
-        collection.document(id)
-                .delete();
+    public Task<Void> delete(String id) {
+        return collection.document(id)
+                .delete()
+                .continueWithTask(new Continuation<Void, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(@NonNull Task<Void> task) throws Exception {
+                        if (task.isSuccessful()) {
+                            return Tasks.forResult(null); // Thành công, trả về Task<Void> trống
+                        } else {
+                            throw task.getException(); // Thất bại, ném ra ngoại lệ
+                        }
+                    }
+                });
+    }
+    public Task<Void> removeSongFromAllUsersFavorites(String songId) {
+        return collection.get().continueWithTask(new Continuation<QuerySnapshot, Task<Void>>() {
+            @Override
+            public Task<Void> then(@NonNull Task<QuerySnapshot> task) throws Exception {
+                if (task.isSuccessful()) {
+                    ArrayList<Task<Void>> tasks = new ArrayList<>();
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        UserInfo user = document.toObject(UserInfo.class);
+                        if (user != null && user.getLikes() != null && user.getLikes().contains(songId)) {
+                            user.getLikes().remove(songId);
+                            tasks.add(collection.document(user.getId()).set(user));
+                        }
+                    }
+                    return Tasks.whenAll(tasks);
+                } else {
+                    throw task.getException();
+                }
+            }
+        });
     }
 }
