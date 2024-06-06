@@ -101,7 +101,7 @@ public class SearchOnYoutubeFragment extends Fragment {
         fetchDataFromApi(getContext());
     }
 
-    private String apiKey = "AIzaSyA3U_Em89z-aoNc4kPxWMmF4uDtCykRI5g";
+    private String apiKey = "AIzaSyBrbnzR3kdjM5e8Scs-mwkzDeIux8LD6-E";
     private String url = "";
     private int expectedTotalResults = 20;
     void fetchDataFromApi(Context context) {

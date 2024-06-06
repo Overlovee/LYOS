@@ -1,29 +1,17 @@
 package com.example.lyos;
 
-import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.lyos.CustomAdapters.RankedSongRecycleViewAdapter;
-import com.example.lyos.FirebaseHandlers.SongHandler;
-import com.example.lyos.Models.Song;
+import com.example.lyos.CustomAdapters.HomeViewPaperAdapter;
 import com.example.lyos.databinding.FragmentHomeBinding;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-
-import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -31,6 +19,8 @@ import java.util.ArrayList;
  * create an instance of this fragment.
  */
 public class HomeFragment extends Fragment {
+    final private int TAB_COUNT = 2;
+    HomeViewPaperAdapter viewPagerAdapter;
     private FragmentHomeBinding fragmentHomeBinding;
 
 
@@ -45,7 +35,6 @@ public class HomeFragment extends Fragment {
 
     public HomeFragment() {
         // Required empty public constructor
-        songArrayList = null;
     }
     /**
      * Use this factory method to create a new instance of
@@ -81,52 +70,13 @@ public class HomeFragment extends Fragment {
         fragmentHomeBinding = FragmentHomeBinding.inflate(getLayoutInflater());
         return fragmentHomeBinding.getRoot();
     }
-
-    private ArrayList<Song> songArrayList;
-    private RankedSongRecycleViewAdapter adapter;
-    SongHandler songHandler = new SongHandler();
-    Context context;
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        context = getContext();
-        getTopSongs();
+        viewPagerAdapter = new HomeViewPaperAdapter(getChildFragmentManager());
+        fragmentHomeBinding.homeViewPager.setAdapter(viewPagerAdapter);
+        fragmentHomeBinding.tab.setupWithViewPager(fragmentHomeBinding.homeViewPager);
+        fragmentHomeBinding.homeViewPager.setOffscreenPageLimit(TAB_COUNT);
     }
 
-    private void getTopSongs() {
-        songHandler.getTopSongs(20).addOnCompleteListener(new OnCompleteListener<ArrayList<Song>>() {
-            @Override
-            public void onComplete(@NonNull Task<ArrayList<Song>> task) {
-                if (task.isSuccessful()) {
-                    songArrayList = task.getResult();
-                    if(songArrayList != null){
-                        if(songArrayList.size() > 0){
-                            fragmentHomeBinding.textViewNoSongs.setVisibility(View.GONE);
-                            fragmentHomeBinding.recycleViewItems.setVisibility(View.VISIBLE);
-
-
-                            adapter = new RankedSongRecycleViewAdapter(context, songArrayList);
-                            fragmentHomeBinding.recycleViewItems.setAdapter(adapter);
-                            fragmentHomeBinding.recycleViewItems.addItemDecoration(new DividerItemDecoration(context ,DividerItemDecoration.VERTICAL));
-                            RecyclerView.LayoutManager mLayoutManager= new LinearLayoutManager(context);
-                            fragmentHomeBinding.recycleViewItems.setLayoutManager(mLayoutManager);
-                            fragmentHomeBinding.recycleViewItems.setItemAnimator(new DefaultItemAnimator());
-
-                        }
-                        else {
-                            fragmentHomeBinding.recycleViewItems.setVisibility(View.GONE);
-                            fragmentHomeBinding.textViewNoSongs.setVisibility(View.VISIBLE);
-                        }
-                    }
-                    else {
-                        fragmentHomeBinding.recycleViewItems.setVisibility(View.GONE);
-                        fragmentHomeBinding.textViewNoSongs.setVisibility(View.VISIBLE);
-                    }
-                } else {
-                    // Xử lý lỗi
-                    Log.e("TopSong", "Error getting top songs", task.getException());
-                }
-            }
-        });
-    }
 }

@@ -15,6 +15,8 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -197,6 +199,40 @@ public class SongHandler {
                     }
                 });
     }
+    public Task<ArrayList<Song>> getTopSongsByLikes(int limit) {
+        return collection.get().continueWith(new Continuation<QuerySnapshot, ArrayList<Song>>() {
+            @Override
+            public ArrayList<Song> then(@NonNull Task<QuerySnapshot> task) throws Exception {
+                ArrayList<Song> list = new ArrayList<>();
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        Song item = document.toObject(Song.class);
+                        if (item != null) {
+                            item.setId(document.getId());
+                            list.add(item);
+                        }
+                    }
+
+                    // Sắp xếp danh sách theo số lượng like trong mảng likedBy
+                    Collections.sort(list, new Comparator<Song>() {
+                        @Override
+                        public int compare(Song s1, Song s2) {
+                            int size1 = s1.getLikedBy() != null ? s1.getLikedBy().size() : 0;
+                            int size2 = s2.getLikedBy() != null ? s2.getLikedBy().size() : 0;
+                            return Integer.compare(size2, size1);
+                        }
+                    });
+
+                    // Giới hạn danh sách theo limit
+                    if (list.size() > limit) {
+                        return new ArrayList<>(list.subList(0, limit));
+                    }
+                }
+                return list;
+            }
+        });
+    }
+
     public Task<ArrayList<Song>> getSongsNotInAnyAlbum(String userId) {
         // Tạo một danh sách để lưu trữ các ID của các bài hát nằm trong album của người dùng
         ArrayList<String> songIdsInAlbums = new ArrayList<>();

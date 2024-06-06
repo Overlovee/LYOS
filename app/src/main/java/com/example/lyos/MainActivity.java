@@ -22,16 +22,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
@@ -45,6 +50,8 @@ import android.widget.SeekBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.lyos.CustomAdapters.SongRecycleViewAdapter;
 import com.example.lyos.FirebaseHandlers.SongHandler;
 import com.example.lyos.FirebaseHandlers.UserHandler;
@@ -87,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
     SongHandler songHandler;
     private GoogleSignInOptions googleSignInOptions;
     private GoogleSignInClient googleSignInClient;
+    private MusicPlayerService musicPlayerService;
     public void setAccount(String id){
         this.account = id;
         AccountUtils.saveAccount(MainActivity.this, account);
@@ -145,7 +153,12 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
         songHandler = new SongHandler();
-        activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
+        if (player != null) {
+            activityMainBinding.layoutNowPlaying.setVisibility(View.VISIBLE);
+        } else {
+            activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
+        }
+
 
         setSupportActionBar(activityMainBinding.toolbar);
         activityMainBinding.bottomNavigationMain.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -198,26 +211,57 @@ public class MainActivity extends AppCompatActivity {
             AddLegacyBroadCastReceiverEvents();
         }
     }
-    private static final String ACTION_PAUSE_OR_PLAY = "PAUSE_OR_PLAY_ACTION";
-    private static final String ACTION_PREVIOUS = "PREVIOUS_ACTION";
-    private static final String ACTION_NEXT = "NEXT_ACTION";
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Kết nối với dịch vụ
+        Intent intent = new Intent(this, MusicPlayerService.class);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Ngắt kết nối với dịch vụ nếu đang kết nối
+        if (isServiceBound) {
+            unbindService(serviceConnection);
+            isServiceBound = false;
+        }
+    }
+    private boolean isServiceBound = false;
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicPlayerService.LocalBinder binder = (MusicPlayerService.LocalBinder) service;
+            musicPlayerService = binder.getService();
+            isServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            musicPlayerService = null;
+            isServiceBound = false;
+        }
+    };
+    private static final String INTERNAL_ACTION_PAUSE_OR_PLAY = "INTERNAL_PAUSE_OR_PLAY_ACTION";
+    private static final String INTERNAL_ACTION_PREVIOUS = "INTERNAL_PREVIOUS_ACTION";
+    private static final String INTERNAL_ACTION_NEXT = "INTERNAL_NEXT_ACTION";
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     private void AddBroadCastReceiverEvents() {
         // Đăng ký BroadcastReceiver để lắng nghe broadcast từ MusicPlayerService
         IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_PAUSE_OR_PLAY);
-        filter.addAction(ACTION_PREVIOUS);
-        filter.addAction(ACTION_NEXT);
+        filter.addAction(INTERNAL_ACTION_PAUSE_OR_PLAY);
+        filter.addAction(INTERNAL_ACTION_PREVIOUS);
+        filter.addAction(INTERNAL_ACTION_NEXT);
         registerReceiver(handleBroadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
     }
 
     private void AddLegacyBroadCastReceiverEvents() {
         // Đăng ký BroadcastReceiver cho các phiên bản thấp hơn
         IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_PAUSE_OR_PLAY);
-        filter.addAction(ACTION_PREVIOUS);
-        filter.addAction(ACTION_NEXT);
+        filter.addAction(INTERNAL_ACTION_PAUSE_OR_PLAY);
+        filter.addAction(INTERNAL_ACTION_PREVIOUS);
+        filter.addAction(INTERNAL_ACTION_NEXT);
         registerReceiver(handleBroadcastReceiver, filter);
     }
     @Override
@@ -239,16 +283,16 @@ public class MainActivity extends AppCompatActivity {
             String action = intent.getAction();
             if (action != null) {
                 switch (action) {
-                    case ACTION_PAUSE_OR_PLAY:
-                        Log.d("MainActivity", "Received PAUSE_OR_PLAY action");
+                    case INTERNAL_ACTION_PAUSE_OR_PLAY:
+                        Log.d("MainActivity", "Received INTERNAL_PAUSE_OR_PLAY action");
                         pauseOrplayAction();
                         break;
-                    case ACTION_PREVIOUS:
-                        Log.d("MainActivity", "Received PREVIOUS action");
+                    case INTERNAL_ACTION_PREVIOUS:
+                        Log.d("MainActivity", "Received INTERNAL_PREVIOUS action");
                         previous();
                         break;
-                    case ACTION_NEXT:
-                        Log.d("MainActivity", "Received NEXT action");
+                    case INTERNAL_ACTION_NEXT:
+                        Log.d("MainActivity", "Received INTERNAL_NEXT action");
                         next();
                         break;
                     default:
@@ -259,6 +303,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    // Phương thức để gọi phương thức cập nhật giao diện của thông báo từ MusicPlayerService
+    private void updateNotificationUI(Bitmap imgBitmap, String title, String userName, String duration, boolean isPlaying) {
+        // Gọi phương thức updateNotificationUI của MusicPlayerService để cập nhật giao diện của thông báo
+        if (musicPlayerService != null) {
+            musicPlayerService.updateNotificationUI(imgBitmap, title, userName, duration, isPlaying);
+        }
+    }
 
     private CurrentlyPlayingSongDialogLayoutBinding currentlyPlayingSongDialogLayoutBinding;
     private void showCurrentPlayingSongDialog() {
@@ -492,18 +544,21 @@ public class MainActivity extends AppCompatActivity {
         loadFragment(searchFragment);
     }
     //Player set up
-    private ExoPlayer player;
+    public ExoPlayer player;
     Handler handler = new Handler();
     private Runnable updateSeekBarRunnable;
-    private ArrayList<Song> currentSongArrayList;
+    public ArrayList<Song> currentSongArrayList;
     private UserInfo currentUserInfo;
     private void setVisibleLayoutNowPlaying(boolean visible) {
         if (visible) {
             if (activityMainBinding.layoutNowPlaying.getVisibility() == View.GONE) {
                 activityMainBinding.layoutNowPlaying.setVisibility(View.VISIBLE);
-                // Start MusicPlayerService
-                Intent serviceIntent = new Intent(this, MusicPlayerService.class);
-                startService(serviceIntent);
+                // Khởi động dịch vụ
+                Intent intent = new Intent(this, MusicPlayerService.class);
+                startService(intent);
+
+                // Kết nối với dịch vụ
+                bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
             }
             if (player == null) {
                 initializePlayerListener();
@@ -514,9 +569,15 @@ public class MainActivity extends AppCompatActivity {
         } else {
             if (activityMainBinding.layoutNowPlaying.getVisibility() == View.VISIBLE) {
                 activityMainBinding.layoutNowPlaying.setVisibility(View.GONE);
-                // Dừng MusicPlayerService
-                Intent serviceIntent = new Intent(this, MusicPlayerService.class);
-                stopService(serviceIntent);
+                // Ngắt kết nối với dịch vụ
+                if (isServiceBound) {
+                    unbindService(serviceConnection);
+                    isServiceBound = false;
+                }
+
+                // Dừng dịch vụ
+                Intent intent = new Intent(this, MusicPlayerService.class);
+                stopService(intent);
             }
         }
     }
@@ -717,18 +778,6 @@ public class MainActivity extends AppCompatActivity {
             if(currentlyPlayingSongDialogLayoutBinding != null) {
                 currentlyPlayingSongDialogLayoutBinding.buttonLike.setEnabled(false);
             }
-            // Cập nhật hình ảnh bài hát
-            String imagePath = "images/" + song.getImageFileName();
-            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
-            storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                Glide.with(MainActivity.this).load(uri).into(activityMainBinding.imageViewNowPlaying);
-                if(currentlyPlayingSongDialogLayoutBinding != null){
-                    Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewSong);
-                    Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewBackGround);
-                }
-            }).addOnFailureListener(exception -> {
-                // Handle any errors
-            });
 
             // Cập nhật tiêu đề bài hát
             activityMainBinding.textViewTitle.setText(song.getTitle());
@@ -740,6 +789,36 @@ public class MainActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         currentUserInfo = task.getResult();
                         if (currentUserInfo != null) {
+                            // Cập nhật hình ảnh bài hát
+                            String imagePath = "images/" + song.getImageFileName();
+                            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
+                            storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                                Glide.with(MainActivity.this).load(uri).into(activityMainBinding.imageViewNowPlaying);
+                                if(currentlyPlayingSongDialogLayoutBinding != null){
+                                    Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewSong);
+                                    Glide.with(MainActivity.this).load(uri).into(currentlyPlayingSongDialogLayoutBinding.imageViewBackGround);
+                                }
+                                Glide.with(MainActivity.this)
+                                        .asBitmap()
+                                        .load(uri)
+                                        .into(new CustomTarget<Bitmap>() {
+                                            @Override
+                                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                                updateNotificationUI(resource,
+                                                        song.getTitle(),
+                                                        currentUserInfo.getUsername(),
+                                                        String.valueOf(song.getDuration()),
+                                                        player.getPlayWhenReady());
+                                            }
+
+                                            @Override
+                                            public void onLoadCleared(@Nullable Drawable placeholder) {
+                                                // Xử lý khi việc tải hình ảnh bị hủy
+                                            }
+                                        });
+                            }).addOnFailureListener(exception -> {
+                                // Handle any errors
+                            });
                             activityMainBinding.textViewUserName.setText(currentUserInfo.getUsername());
                             if(currentlyPlayingSongDialogLayoutBinding != null){
                                 currentlyPlayingSongDialogLayoutBinding.textViewTitle.setText(song.getTitle());
@@ -832,7 +911,6 @@ public class MainActivity extends AppCompatActivity {
                         if (currentSongArrayList != null && currentIndex >= 0 && currentIndex < currentSongArrayList.size()) {
                             // Lấy bài hát từ danh sách dựa trên index
                             Song currentSong = currentSongArrayList.get(currentIndex);
-
                             // Cập nhật UI với thông tin bài hát hiện tại
                             updateNowPlayingUI(currentSong);
                             currentSong.setListens(currentSong.getListens() + 1);
@@ -849,11 +927,17 @@ public class MainActivity extends AppCompatActivity {
     private void updatePlayPauseButton(boolean isPlaying) {
         if (isPlaying) {
             activityMainBinding.stopButtonPlayback.setImageResource(R.drawable.pause);
+            if (musicPlayerService != null) {
+                musicPlayerService.updatePlayPauseButton(isPlaying);
+            }
             if (currentlyPlayingSongDialogLayoutBinding != null) {
                 currentlyPlayingSongDialogLayoutBinding.stopButtonPlayback.setImageResource(R.drawable.pause_button);
             }
         } else {
             activityMainBinding.stopButtonPlayback.setImageResource(R.drawable.play);
+            if (musicPlayerService != null) {
+                musicPlayerService.updatePlayPauseButton(isPlaying);
+            }
             if (currentlyPlayingSongDialogLayoutBinding != null) {
                 currentlyPlayingSongDialogLayoutBinding.stopButtonPlayback.setImageResource(R.drawable.play_button);
             }
@@ -891,7 +975,7 @@ public class MainActivity extends AppCompatActivity {
                             // Cập nhật giá trị của SeekBar để hiển thị vị trí hiện tại của media
                             currentlyPlayingSongDialogLayoutBinding.seekBarDuration.setProgress((int) currentPosition);
                         }
-
+                        musicPlayerService.updateProcessAndDuration((int) currentPosition, (int) totalDuration);
                         // Gửi thông điệp cập nhật sau mỗi khoảng thời gian nhất định (ví dụ: 1 giây)
                         handler.postDelayed(this, 1000);
                     }
@@ -953,6 +1037,7 @@ public class MainActivity extends AppCompatActivity {
             updatePlayPauseButton(true);
         }
     }
+
     private void clearPlaylist(){
         if(player != null){
             stop();
@@ -962,9 +1047,15 @@ public class MainActivity extends AppCompatActivity {
             currentSongArrayList.clear();
             setVisibleLayoutNowPlaying(false);
 
-            // Dừng MusicPlayerService
-            Intent serviceIntent = new Intent(this, MusicPlayerService.class);
-            stopService(serviceIntent);
+            // Ngắt kết nối với dịch vụ
+            if (isServiceBound) {
+                unbindService(serviceConnection);
+                isServiceBound = false;
+            }
+
+            // Dừng dịch vụ
+            Intent intent = new Intent(this, MusicPlayerService.class);
+            stopService(intent);
         }
     }
     @SuppressLint("StaticFieldLeak")

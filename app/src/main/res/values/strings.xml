@@ -2,6 +2,6 @@
     <string name="app_name">LYOS</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="default_web_client_id">15156846423-grhq19apsdh2vcjs54sblvt78ntpmlsj.apps.googleusercontent.com</string>
-    <string name="web_client_id">15156846423-hp3qtmsfte3039ajm3ajbvv7s9074v77.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">592303624615-lo0njmdnquf501fh59ggkrrdfd75kle9.apps.googleusercontent.com</string>
+    <string name="web_client_id">592303624615-6kut5d8c9090g9qm3ck7m3kh1dcthim1.apps.googleusercontent.com</string>
 </resources>

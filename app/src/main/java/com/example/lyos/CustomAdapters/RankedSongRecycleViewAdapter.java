@@ -47,6 +47,7 @@ import java.util.Random;
 public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSongRecycleViewAdapter.MyViewHolder>{
     private Context context;
     private ArrayList<Song> list;
+    private String type = "";
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public ImageView imageViewItem;
         public ImageView imageViewMoreOptionsAction;
@@ -54,6 +55,7 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
         public TextView textViewUserName;
         public TextView textViewDuration;
         public TextView textViewSerial;
+        public TextView textViewNumber;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -63,12 +65,14 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
             textViewUserName = itemView.findViewById(R.id.textViewUserName);
             textViewDuration = itemView.findViewById(R.id.textViewDuration);
             textViewSerial = itemView.findViewById(R.id.textViewSerial);
+            textViewNumber = itemView.findViewById(R.id.textViewNumber);
         }
     }
 
-    public RankedSongRecycleViewAdapter(Context context, ArrayList<Song> list) {
+    public RankedSongRecycleViewAdapter(Context context, ArrayList<Song> list, String type) {
         this.context = context;
         this.list = list;
+        this.type = type;
     }
 
     @Override
@@ -89,6 +93,20 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
         colors = ColorUtils.getColors();
         random = new Random();
         holder.textViewSerial.setText(String.valueOf(position + 1));
+        if(type.equals("listens")){
+            String listens = formatNumber(item.getListens());
+            holder.textViewNumber.setText(listens);
+        }
+        else if(type.equals("likedBy")){
+            if(item.getLikedBy() != null){
+                String likes = formatNumber(item.getLikedBy().size());
+                holder.textViewNumber.setText(likes);
+            }
+            else {
+                holder.textViewNumber.setText("0");
+            }
+
+        }
         // Lấy màu ngẫu nhiên từ danh sách và gán cho textViewSerial
         int color = colors.get(random.nextInt(colors.size()));
         holder.textViewSerial.setTextColor(color);
@@ -172,6 +190,17 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
                 }
             }
         });
+    }
+    private String formatNumber(int number) {
+        if (number >= 1000000000) {
+            return String.format("%.1fB", number / 1000000000.0);
+        } else if (number >= 1000000) {
+            return String.format("%.1fM", number / 1000000.0);
+        } else if (number >= 1000) {
+            return String.format("%.1fK", number / 1000.0);
+        } else {
+            return String.valueOf(number);
+        }
     }
     private OtherSongOptionsBottomSheetDialogLayoutBinding dialogLayoutBinding;
     private void showDialog(MyViewHolder holder, Song item) {

@@ -17,6 +17,8 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class UserHandler {
     private static final String COLLECTION_NAME = "users";
@@ -39,6 +41,39 @@ public class UserHandler {
     public Task<Void> updateProfileBanner(String userId, String photoUrl) {
         return FirebaseFirestore.getInstance().collection("users").document(userId)
                 .update("profileBanner", photoUrl);
+    }
+    public Task<ArrayList<UserInfo>> getTopUsersByFollowers(int limit) {
+        ArrayList<UserInfo> list = new ArrayList<>();
+        return collection.get().continueWith(new Continuation<QuerySnapshot, ArrayList<UserInfo>>() {
+            @Override
+            public ArrayList<UserInfo> then(@NonNull Task<QuerySnapshot> task) throws Exception {
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        UserInfo item = document.toObject(UserInfo.class);
+                        if (item != null) {
+                            item.setId(document.getId());
+                            list.add(item);
+                        }
+                    }
+
+                    // Sắp xếp danh sách theo số lượng followers trong mảng followers
+                    Collections.sort(list, new Comparator<UserInfo>() {
+                        @Override
+                        public int compare(UserInfo u1, UserInfo u2) {
+                            int size1 = u1.getFollowers() != null ? u1.getFollowers().size() : 0;
+                            int size2 = u2.getFollowers() != null ? u2.getFollowers().size() : 0;
+                            return Integer.compare(size2, size1);
+                        }
+                    });
+
+                    // Giới hạn danh sách theo limit
+                    if (list.size() > limit) {
+                        return new ArrayList<>(list.subList(0, limit));
+                    }
+                }
+                return list;
+            }
+        });
     }
 
     public Task<ArrayList<UserInfo>> getAllData() {
