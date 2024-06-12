@@ -22,7 +22,6 @@ import androidx.core.app.NotificationCompat;
 import com.example.lyos.MainActivity;
 import com.example.lyos.R;
 
-
 public class MusicPlayerService extends Service {
     private static final String CHANNEL_ID = "MusicPlayerChannel";
     private static final String ACTION_PAUSE_OR_PLAY = "PAUSE_OR_PLAY_ACTION";
@@ -33,6 +32,8 @@ public class MusicPlayerService extends Service {
     private static final String INTERNAL_ACTION_NEXT = "INTERNAL_NEXT_ACTION";
     private static final String TAG = "MusicPlayerService";
     private RemoteViews remoteViews;
+    private boolean isReceiverRegistered = false;
+
     // Phương thức để cung cấp tham chiếu đến dịch vụ từ MainActivity
     public class LocalBinder extends Binder {
         public MusicPlayerService getService() {
@@ -69,6 +70,7 @@ public class MusicPlayerService extends Service {
         filter.addAction(ACTION_NEXT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             registerReceiver(broadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            isReceiverRegistered = true;
         }
     }
 
@@ -83,7 +85,10 @@ public class MusicPlayerService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "Service destroyed");
-        unregisterReceiver(broadcastReceiver);
+        if (isReceiverRegistered) {
+            unregisterReceiver(broadcastReceiver);
+            isReceiverRegistered = false;
+        }
         stopForeground(true);
     }
 
@@ -93,11 +98,13 @@ public class MusicPlayerService extends Service {
         Log.d(TAG, "Service bound");
         return new LocalBinder();
     }
+
     @Override
     public boolean onUnbind(Intent intent) {
         Log.d(TAG, "Service unbound");
         return super.onUnbind(intent);
     }
+
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel serviceChannel = new NotificationChannel(
@@ -115,6 +122,7 @@ public class MusicPlayerService extends Service {
             }
         }
     }
+
     private void createNotification() {
         remoteViews = new RemoteViews(getPackageName(), R.layout.custom_notification_player_layout);
 
@@ -139,10 +147,12 @@ public class MusicPlayerService extends Service {
         notification.flags |= Notification.FLAG_NO_CLEAR;
         startForeground(1, notification);
     }
+
     private PendingIntent getPendingIntent(Context context, String action) {
         Intent intent = new Intent(action).setPackage(getPackageName());
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
+
     // Phương thức để cập nhật giao diện của thông báo từ MainActivity
     public void updateNotificationUI(Bitmap img, String title, String userName, String duration, boolean isPlaying) {
         // Kiểm tra nếu remoteViews
@@ -155,10 +165,9 @@ public class MusicPlayerService extends Service {
         remoteViews.setTextViewText(R.id.textViewUserName, userName);
         remoteViews.setTextViewText(R.id.textViewDuration, duration);
 
-        if(isPlaying){
+        if (isPlaying) {
             remoteViews.setImageViewResource(R.id.stopButtonPlayback, R.drawable.pause_button);
-        }
-        else {
+        } else {
             remoteViews.setImageViewResource(R.id.stopButtonPlayback, R.drawable.play_button);
         }
         // Cập nhật thông báo
@@ -175,6 +184,7 @@ public class MusicPlayerService extends Service {
                     .build());
         }
     }
+
     // Phương thức để cập nhật tiến trình của bài hát và thời lượng đã phát
     public void updateProcessAndDuration(int currentPosition, int totalDuration) {
         // Kiểm tra nếu remoteViews null
@@ -208,6 +218,7 @@ public class MusicPlayerService extends Service {
                     .build());
         }
     }
+
     public void updatePlayPauseButton(boolean isPlaying) {
         // Kiểm tra nếu remoteViews null
         if (remoteViews == null) {
@@ -218,7 +229,6 @@ public class MusicPlayerService extends Service {
         } else {
             remoteViews.setImageViewResource(R.id.stopButtonPlayback, R.drawable.play_button);
         }
-
 
         // Cập nhật thông báo
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
