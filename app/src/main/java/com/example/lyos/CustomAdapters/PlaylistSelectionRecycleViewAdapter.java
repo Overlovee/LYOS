@@ -99,34 +99,45 @@ public class PlaylistSelectionRecycleViewAdapter extends RecyclerView.Adapter<Pl
             }
             holder.textViewTracks.setText("Playlist: " + String.valueOf(item.getSongList().size()) + " tracks");
             SongHandler handler = new SongHandler();
-            handler.getInfoByID(item.getSongList().get(0)).addOnCompleteListener(new OnCompleteListener<Song>() {
-                @Override
-                public void onComplete(@NonNull Task<Song> task) {
-                    if (task.isSuccessful()) {
-                        Song song = task.getResult();
-                        // Load image using Glide library
-                        String imagePath = "images/" + song.getImageFileName();
-                        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
-                        storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                            Glide.with(context).load(uri).into(holder.imageViewItem);
-                        }).addOnFailureListener(exception -> {
-                            // Handle any errors
-                            holder.imageViewItem.setImageResource(R.drawable.lyos);
-                        });
+            if(item.getSongList().size() > 0){
+                handler.getInfoByID(item.getSongList().get(0)).addOnCompleteListener(new OnCompleteListener<Song>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Song> task) {
+                        if (task.isSuccessful()) {
+                            Song song = task.getResult();
+                            // Load image using Glide library
+                            String imagePath = "images/" + song.getImageFileName();
+                            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
+                            storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                                Glide.with(context).load(uri).into(holder.imageViewItem);
+                            }).addOnFailureListener(exception -> {
+                                // Handle any errors
+                                holder.imageViewItem.setImageResource(R.drawable.lyos);
+                            });
 
-                    } else {
-                        //and more action --.--
-                        // Load image using Glide library
-                        String imagePath = "images/lyos.png" ;
-                        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
-                        storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                            Glide.with(context).load(uri).into(holder.imageViewItem);
-                        }).addOnFailureListener(exception -> {
-                            // Handle any errors
-                        });
+                        } else {
+                            //and more action --.--
+                            // Load image using Glide library
+                            String imagePath = "images/lyos.png" ;
+                            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
+                            storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                                Glide.with(context).load(uri).into(holder.imageViewItem);
+                            }).addOnFailureListener(exception -> {
+                                // Handle any errors
+                            });
+                        }
                     }
-                }
-            });
+                });
+            }
+            else {
+                String imagePath = "images/lyos.png" ;
+                StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
+                storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                    Glide.with(context).load(uri).into(holder.imageViewItem);
+                }).addOnFailureListener(exception -> {
+                    // Handle any errors
+                });
+            }
         }
 
         UserHandler userHandler = new UserHandler();

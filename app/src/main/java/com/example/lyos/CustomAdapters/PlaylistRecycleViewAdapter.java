@@ -134,6 +134,15 @@ public class PlaylistRecycleViewAdapter extends RecyclerView.Adapter<PlaylistRec
                     }
                 });
             }
+            else {
+                String imagePath = "images/lyos.png" ;
+                StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(imagePath);
+                storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                    Glide.with(context).load(uri).into(holder.imageViewItem);
+                }).addOnFailureListener(exception -> {
+                    // Handle any errors
+                });
+            }
         }
 
         UserHandler userHandler = new UserHandler();
