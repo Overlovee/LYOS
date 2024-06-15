@@ -71,6 +71,9 @@ public class MusicPlayerService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             registerReceiver(broadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
             isReceiverRegistered = true;
+        } else {
+            registerReceiver(broadcastReceiver, filter);
+            isReceiverRegistered = true;
         }
     }
 

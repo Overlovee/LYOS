@@ -1051,7 +1051,6 @@ public class MainActivity extends AppCompatActivity {
             player = null; // Set player to null to ensure it will be reinitialized later
             currentSongArrayList.clear();
             setVisibleLayoutNowPlaying(false);
-
             // Ngắt kết nối với dịch vụ
             if (isServiceBound) {
                 unbindService(serviceConnection);
