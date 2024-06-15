@@ -82,13 +82,14 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
     }
 
     private UserInfo user;
-    private UserInfo currentUserInfo = new UserInfo();
+    private UserInfo currentUserInfo;
     FragmentActivity fragmentActivity;
     SongHandler songHandler;
     private ArrayList<Integer> colors;
     private Random random;
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
+        currentUserInfo = null;
         Song item = list.get(position);
         colors = ColorUtils.getColors();
         random = new Random();
@@ -141,6 +142,17 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
                     currentUserInfo = task.getResult();
                     if (currentUserInfo != null) {
                         holder.textViewUserName.setText(currentUserInfo.getUsername());
+                        holder.imageViewMoreOptionsAction.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (currentUserInfo != null) {
+                                    showDialog(holder, item);
+                                } else {
+                                    // Xử lý khi currentUserInfo là null (ví dụ: hiển thị thông báo lỗi)
+                                    Toast.makeText(context, "Current user information is not available", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
                     } else {
                         holder.textViewUserName.setText("Unknown");
                     }
@@ -169,17 +181,7 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
         }).addOnFailureListener(exception -> {
             // Handle any errors
         });
-        holder.imageViewMoreOptionsAction.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentUserInfo != null) {
-                    showDialog(holder, item);
-                } else {
-                    // Xử lý khi currentUserInfo là null (ví dụ: hiển thị thông báo lỗi)
-                    Toast.makeText(context, "Current user information is not available", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -242,15 +244,18 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
                     if (item.getLikedBy().contains(user.getId())) {
                         // Nếu đã thích, hủy thích bằng cách loại bỏ ID của người dùng khỏi danh sách thích
                         item.getLikedBy().remove(user.getId());
+                        user.getLikes().remove(item.getId());
                         dialogLayoutBinding.imageViewActionLike.setImageResource(R.drawable.heart);
                     } else {
                         // Nếu chưa thích, thêm ID của người dùng vào danh sách thích
                         item.getLikedBy().add(user.getId());
+                        user.getLikes().add(item.getId());
                         dialogLayoutBinding.imageViewActionLike.setImageResource(R.drawable.hearted);
                     }
                 } else {
                     item.setLikedBy(new ArrayList<>());
                     item.getLikedBy().add(user.getId());
+                    user.getLikes().add(item.getId());
                     dialogLayoutBinding.imageViewActionLike.setImageResource(R.drawable.hearted);
                 }
 
@@ -268,6 +273,8 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
                             public void onFailure(@NonNull Exception e) {
                             }
                         });
+                UserHandler userHandler = new UserHandler();
+                userHandler.update(user.getId(), user);
             }
         });
         dialogLayoutBinding.layoutAddToNextUp.setOnClickListener(new View.OnClickListener() {
@@ -292,13 +299,27 @@ public class RankedSongRecycleViewAdapter extends RecyclerView.Adapter<RankedSon
                 // Kiểm tra xem context có phải là instance của MainActivity hay không
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
-                    if(currentUserInfo.getId().equals(user.getId())){
+                    if(item.getUserID().equals(user.getId())){
                         mainActivity.openProfileFragment();
-                        dialog.dismiss();
                     }
                     else {
-                        mainActivity.openProfileDetailFragment(currentUserInfo);
+                        UserHandler userHandler = new UserHandler();
+                        userHandler.getInfoByID(item.getUserID()).addOnCompleteListener(new OnCompleteListener<UserInfo>() {
+                            @Override
+                            public void onComplete(@NonNull Task<UserInfo> task) {
+                                if (task.isSuccessful()) {
+                                    UserInfo userProfile = task.getResult();
+                                    if (userProfile != null) {
+                                        mainActivity.openProfileDetailFragment(userProfile);
+                                    }
+                                } else {
+                                    //and more action --.--
+                                    holder.textViewUserName.setText("Unknown");
+                                }
+                            }
+                        });
                     }
+                    dialog.dismiss();
                 }
             }
         });

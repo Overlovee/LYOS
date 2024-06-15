@@ -368,15 +368,18 @@ public class MainActivity extends AppCompatActivity {
                     if (item.getLikedBy().contains(user.getId())) {
                         // Nếu đã thích, hủy thích bằng cách loại bỏ ID của người dùng khỏi danh sách thích
                         item.getLikedBy().remove(user.getId());
+                        user.getLikes().remove(item.getId());
                         currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.heart);
                     } else {
                         // Nếu chưa thích, thêm ID của người dùng vào danh sách thích
                         item.getLikedBy().add(user.getId());
+                        user.getLikes().add(item.getId());
                         currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.hearted);
                     }
                 } else {
                     item.setLikedBy(new ArrayList<>());
                     item.getLikedBy().add(user.getId());
+                    user.getLikes().add(item.getId());
                     currentlyPlayingSongDialogLayoutBinding.buttonLike.setImageResource(R.drawable.hearted);
                 }
 
@@ -394,6 +397,8 @@ public class MainActivity extends AppCompatActivity {
                             public void onFailure(@NonNull Exception e) {
                             }
                         });
+                UserHandler userHandler = new UserHandler();
+                userHandler.update(user.getId(), user);
             }
         });
 
@@ -1199,6 +1204,9 @@ public class MainActivity extends AppCompatActivity {
         activityMainBinding.toolbar.setVisibility(View.GONE);
     }
     public void showToolbar(){
+        activityMainBinding.textViewFragmentTitle.setVisibility(View.GONE);
+        activityMainBinding.searchBar.setVisibility(View.VISIBLE);
+        activityMainBinding.searchBar.setIconifiedByDefault(false);
         activityMainBinding.toolbar.setVisibility(View.VISIBLE);
     }
     public void openProfileFragment() {
@@ -1237,7 +1245,6 @@ public class MainActivity extends AppCompatActivity {
     public void loadFragment(Fragment fragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(activityMainBinding.frameFragment.getId(), fragment);
-        transaction.addToBackStack(null);
         transaction.commit();
     }
     private void AddEvents(){

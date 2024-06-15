@@ -283,9 +283,8 @@ public class SongHandler {
     }
     public Task<ArrayList<Song>> searchByTag(String tag) {
         ArrayList<Song> list = new ArrayList<>();
-        String normalizedTag = normalizeString(tag);
+//        String normalizedTag = normalizeString(tag);
         return collection
-                .whereLessThanOrEqualTo("tag", normalizedTag)
                 .get()
                 .continueWith(new Continuation<QuerySnapshot, ArrayList<Song>>() {
                     @Override
@@ -295,7 +294,9 @@ public class SongHandler {
                                 Song item = document.toObject(Song.class);
                                 if (item != null) {
                                     item.setId(document.getId());
-                                    list.add(item);
+                                    if (item.getTag() != null && item.getTag().contains(tag)) {
+                                        list.add(item);
+                                    }
                                 }
                             }
                         }

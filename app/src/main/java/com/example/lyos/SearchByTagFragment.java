@@ -129,8 +129,10 @@ public class SearchByTagFragment extends Fragment {
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
                     mainActivity.showToolbar();
+                    getActivity().getSupportFragmentManager().popBackStack();
+                    mainActivity.loadFragment(new SearchFragment());
                 }
-                getActivity().getSupportFragmentManager().popBackStack();
+
             }
         });
     }

@@ -209,15 +209,18 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
                     if (item.getLikedBy().contains(user.getId())) {
                         // Nếu đã thích, hủy thích bằng cách loại bỏ ID của người dùng khỏi danh sách thích
                         item.getLikedBy().remove(user.getId());
+                        user.getLikes().remove(item.getId());
                         dialogLayoutBinding.imageViewActionLike.setImageResource(R.drawable.heart);
                     } else {
                         // Nếu chưa thích, thêm ID của người dùng vào danh sách thích
                         item.getLikedBy().add(user.getId());
+                        user.getLikes().add(item.getId());
                         dialogLayoutBinding.imageViewActionLike.setImageResource(R.drawable.hearted);
                     }
                 } else {
                     item.setLikedBy(new ArrayList<>());
                     item.getLikedBy().add(user.getId());
+                    user.getLikes().add(item.getId());
                     dialogLayoutBinding.imageViewActionLike.setImageResource(R.drawable.hearted);
                 }
 
@@ -235,6 +238,8 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
                             public void onFailure(@NonNull Exception e) {
                             }
                         });
+                UserHandler userHandler = new UserHandler();
+                userHandler.update(user.getId(), user);
             }
         });
 
@@ -260,13 +265,27 @@ public class SongRecycleViewAdapter extends RecyclerView.Adapter<SongRecycleView
                 // Kiểm tra xem context có phải là instance của MainActivity hay không
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
-                    if(currentUserInfo.getId().equals(user.getId())){
+                    if(item.getUserID().equals(user.getId())){
                         mainActivity.openProfileFragment();
-                        dialog.dismiss();
                     }
                     else {
-                        mainActivity.openProfileDetailFragment(currentUserInfo);
+                        UserHandler userHandler = new UserHandler();
+                        userHandler.getInfoByID(item.getUserID()).addOnCompleteListener(new OnCompleteListener<UserInfo>() {
+                            @Override
+                            public void onComplete(@NonNull Task<UserInfo> task) {
+                                if (task.isSuccessful()) {
+                                    UserInfo userProfile = task.getResult();
+                                    if (userProfile != null) {
+                                        mainActivity.openProfileDetailFragment(userProfile);
+                                    }
+                                } else {
+                                    //and more action --.--
+                                    holder.textViewUserName.setText("Unknown");
+                                }
+                            }
+                        });
                     }
+                    dialog.dismiss();
                 }
             }
         });
