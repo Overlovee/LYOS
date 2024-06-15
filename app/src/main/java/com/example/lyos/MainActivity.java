@@ -1245,6 +1245,7 @@ public class MainActivity extends AppCompatActivity {
     public void loadFragment(Fragment fragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(activityMainBinding.frameFragment.getId(), fragment);
+        transaction.addToBackStack(null);
         transaction.commit();
     }
     private void AddEvents(){
