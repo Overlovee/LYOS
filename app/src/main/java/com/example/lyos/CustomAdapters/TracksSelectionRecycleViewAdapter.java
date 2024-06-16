@@ -88,7 +88,14 @@ public class TracksSelectionRecycleViewAdapter extends RecyclerView.Adapter<Trac
                 }
             }
         });
-        holder.textViewDuration.setText("Duration: " + String.valueOf(item.getDuration()));
+        int duration = item.getDuration();
+        int sec = duration%60;
+        int min = (duration - sec)/60;
+        String seccond = String.valueOf(sec);
+        if(sec < 10){
+            seccond = "0" + seccond;
+        }
+        holder.textViewDuration.setText("Duration: " + String.valueOf(min) + ":" + seccond);
 
         // Load image using Glide library
         String imagePath = "images/" + item.getImageFileName();
